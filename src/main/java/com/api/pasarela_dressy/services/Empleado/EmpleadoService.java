@@ -1,5 +1,6 @@
 package com.api.pasarela_dressy.services.Empleado;
 
+import com.api.pasarela_dressy.model.dto.Empleado.ChangePasswordDto;
 import com.api.pasarela_dressy.model.dto.Empleado.CreateEmpleadoDto;
 import com.api.pasarela_dressy.model.dto.Empleado.EmpleadoDto;
 import com.api.pasarela_dressy.model.dto.Empleado.UpdateEmpleadoDto;
@@ -17,4 +18,5 @@ public interface EmpleadoService
     EmpleadoDto restore(String id_empleado);
     EmpleadoDto disable(String id_empleado);
     EmpleadoDto enable(String id_empleado);
+    EmpleadoDto changePassword(String id_empleado, ChangePasswordDto passwordDto);
 }

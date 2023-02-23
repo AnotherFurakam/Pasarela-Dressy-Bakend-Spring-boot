@@ -38,11 +38,11 @@ public class AsignacionEntity implements Serializable{
   private Boolean activo = true;
 
   @Column
-  private Boolean eliminado;
+  private Boolean eliminado = false;
 
   @ManyToOne
   @JoinColumn(name="id_rol", nullable = false)
-  private RolEntity role;
+  private RolEntity rol;
 
   @ManyToOne
   @JoinColumn(name="id_empleado", nullable = false)

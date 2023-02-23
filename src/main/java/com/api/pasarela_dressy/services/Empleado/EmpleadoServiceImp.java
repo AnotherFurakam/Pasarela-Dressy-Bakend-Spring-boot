@@ -3,6 +3,7 @@ package com.api.pasarela_dressy.services.Empleado;
 import com.api.pasarela_dressy.exception.BadRequestException;
 import com.api.pasarela_dressy.exception.NotFoundException;
 import com.api.pasarela_dressy.exception.UniqueFieldException;
+import com.api.pasarela_dressy.model.dto.Empleado.ChangePasswordDto;
 import com.api.pasarela_dressy.model.dto.Empleado.CreateEmpleadoDto;
 import com.api.pasarela_dressy.model.dto.Empleado.EmpleadoDto;
 import com.api.pasarela_dressy.model.dto.Empleado.UpdateEmpleadoDto;
@@ -106,9 +107,7 @@ public class EmpleadoServiceImp implements EmpleadoService
     public EmpleadoDto delete(String id_empleado)
     {
         try {
-            EmpleadoEntity empleadoEntity = empleadoRepository
-                .findById(UUID.fromString(id_empleado))
-                .orElseThrow(() -> new NotFoundException("Empleado no encontrado"));
+            EmpleadoEntity empleadoEntity = empleadoRepository.findById(UUID.fromString(id_empleado)).orElseThrow(() -> new NotFoundException("Empleado no encontrado"));
 
             //Comprobando si el empleado ya fue eliminado
             if (empleadoEntity.getEliminado()) throw new BadRequestException("El empleado fue eliminado");
@@ -131,9 +130,7 @@ public class EmpleadoServiceImp implements EmpleadoService
     public EmpleadoDto restore(String id_empleado)
     {
         try {
-            EmpleadoEntity empleadoEntity = empleadoRepository
-                .findById(UUID.fromString(id_empleado))
-                .orElseThrow(() -> new NotFoundException("Empleado no encontrado"));
+            EmpleadoEntity empleadoEntity = empleadoRepository.findById(UUID.fromString(id_empleado)).orElseThrow(() -> new NotFoundException("Empleado no encontrado"));
 
             //Comprobando si el empleado ya fue eliminado
             if (!empleadoEntity.getEliminado()) throw new BadRequestException("El empleado no está eliminado");
@@ -155,9 +152,7 @@ public class EmpleadoServiceImp implements EmpleadoService
     public EmpleadoDto disable(String id_empleado)
     {
         try {
-            EmpleadoEntity empleadoEntity = empleadoRepository
-                .findById(UUID.fromString(id_empleado))
-                .orElseThrow(() -> new NotFoundException("Empleado no encontrado"));
+            EmpleadoEntity empleadoEntity = empleadoRepository.findById(UUID.fromString(id_empleado)).orElseThrow(() -> new NotFoundException("Empleado no encontrado"));
 
             if (empleadoEntity.getEliminado()) throw new BadRequestException("El empleado está eliminado");
             if (!empleadoEntity.getActivo()) throw new BadRequestException("El empleado ya está desabilitado");
@@ -182,6 +177,29 @@ public class EmpleadoServiceImp implements EmpleadoService
 
             empleadoEntity.setActivo(true);
 
+            return mapper.map(empleadoRepository.save(empleadoEntity), EmpleadoDto.class);
+
+        } catch (Exception e) {
+            throw new BadRequestException(e.getMessage());
+        }
+    }
+
+    @Override
+    public EmpleadoDto changePassword(String id_empleado, ChangePasswordDto passwordDto)
+    {
+        try {
+            //Buscando empleado mediante su uuid
+            EmpleadoEntity empleadoEntity = empleadoRepository.findById(UUID.fromString(id_empleado)).orElseThrow(() -> new NotFoundException("Empleado no encontrado"));
+
+            //Verificando si el no está empleado esta eliminado
+            if (empleadoEntity.getEliminado()) throw new BadRequestException("El empleado está eliminado");
+
+            //Verificando si el empleado esta cativo
+            if (!empleadoEntity.getActivo()) throw new BadRequestException("El empleado no está activo");
+
+            empleadoEntity.setContrasenia(passwordDto.getContrasenia());
+
+            //Retornando el mapeado de la entidad del empleado que se guardó en la base de datos
             return mapper.map(empleadoRepository.save(empleadoEntity), EmpleadoDto.class);
 
         } catch (Exception e) {

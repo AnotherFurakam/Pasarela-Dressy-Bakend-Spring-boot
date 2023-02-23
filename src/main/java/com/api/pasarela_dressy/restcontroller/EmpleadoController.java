@@ -1,5 +1,6 @@
 package com.api.pasarela_dressy.restcontroller;
 
+import com.api.pasarela_dressy.model.dto.Empleado.ChangePasswordDto;
 import com.api.pasarela_dressy.model.dto.Empleado.CreateEmpleadoDto;
 import com.api.pasarela_dressy.model.dto.Empleado.EmpleadoDto;
 import com.api.pasarela_dressy.model.dto.Empleado.UpdateEmpleadoDto;
@@ -50,6 +51,16 @@ public class EmpleadoController
     {
         return  new ResponseEntity<>(empleadoService.update(empleado, id_empleado), HttpStatus.OK);
     }
+
+    @PostMapping("/changepassword/{id_empleado}")
+    public ResponseEntity<EmpleadoDto> changePassword(
+        @Valid @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody ChangePasswordDto changePasswordDto,
+        @PathVariable String id_empleado
+        )
+    {
+        return new ResponseEntity<>(empleadoService.changePassword(id_empleado,changePasswordDto), HttpStatus.CREATED);
+    }
+
 
     @DeleteMapping("/{id_empleado}")
     public ResponseEntity<EmpleadoDto> deleteEmpleado(

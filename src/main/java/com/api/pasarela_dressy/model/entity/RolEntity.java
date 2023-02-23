@@ -34,6 +34,6 @@ public class RolEntity implements Serializable{
   @Column
   private Boolean eliminado = false;
 
-  @OneToMany(mappedBy="role")
+  @OneToMany(mappedBy="rol")
   private Set<AsignacionEntity> asignaciones;
 }
