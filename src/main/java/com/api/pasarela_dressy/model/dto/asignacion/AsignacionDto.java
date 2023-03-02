@@ -14,7 +14,6 @@ public class AsignacionDto
 {
     private UUID id_asignacion;
     private LocalDateTime creado_el;
-    private Boolean activo;
     private ShortEmpleadoDto empleado;
     private ShortRolDto rol;
 }

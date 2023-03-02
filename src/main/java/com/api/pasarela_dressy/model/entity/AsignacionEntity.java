@@ -22,7 +22,8 @@ import org.hibernate.annotations.CreationTimestamp;
 @NoArgsConstructor
 @Table(name="asignaciones")
 @Entity
-public class AsignacionEntity implements Serializable{
+public class AsignacionEntity implements Serializable
+{
   @Serial
   private static final long serialVersionUID = 1L; 
 
@@ -33,9 +34,6 @@ public class AsignacionEntity implements Serializable{
   @Column(nullable = false, updatable = false)
   @CreationTimestamp
   private LocalDateTime creado_el;
-
-  @Column
-  private Boolean activo = true;
 
   @Column
   private Boolean eliminado = false;
