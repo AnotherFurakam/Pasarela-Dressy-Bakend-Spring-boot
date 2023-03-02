@@ -24,7 +24,7 @@ public class MarcaEntity implements Serializable
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id_marca;
 
-    @Column(length = 50)
+    @Column(length = 50, unique = true)
     private String nombre;
 
     @Column(nullable = false,updatable = false)

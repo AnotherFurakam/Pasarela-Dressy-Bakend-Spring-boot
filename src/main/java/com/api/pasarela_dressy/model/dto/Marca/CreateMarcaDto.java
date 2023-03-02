@@ -25,6 +25,6 @@ public class CreateMarcaDto
         regexp = "^[a-zA-ZÀ-ÿ\\u00f1\\u00d1]+[a-z A-Z]+(\\s*[a-zA-ZÀ-ÿ\\u00f1\\u00d1]*)*[a-zA-ZÀ-ÿ\\u00f1\\u00d1]$",
         message = "No se permiten caracteres especiales ni números en el nombre"
     )
-    @Schema(name = "nombre", description = "Dto para crear la marca del producto", example = "Adidas")
+    @Schema(name = "nombre", example = "Adidas")
     private String nombre;
 }
