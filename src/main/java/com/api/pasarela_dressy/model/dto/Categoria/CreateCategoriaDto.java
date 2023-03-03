@@ -1,6 +1,5 @@
-package com.api.pasarela_dressy.model.dto.Marca;
+package com.api.pasarela_dressy.model.dto.Categoria;
 
-import io.swagger.annotations.ApiModelProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -10,18 +9,18 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class CreateMarcaDto
+public class CreateCategoriaDto
 {
     @Size(
-        min = 2,
+        min = 3,
         max = 50,
         message = "El nombre debe tener como mínimo {min} y máximo {max} caracteres"
     )
     @NotBlank(message = "El nombre no debe ser nulo ni estar en blanco")
     @Pattern(
-        regexp = "^[a-zA-ZÀ-ÿ\\u00f1\\u00d1]+[a-z A-Z]+(\\s*[a-zA-ZÀ-ÿ\\u00f1\\u00d1]*)*[a-zA-ZÀ-ÿ\\u00f1\\u00d1]$",
-        message = "No se permiten caracteres especiales ni números en el nombre"
+        regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ]?[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]*[a-zA-ZáéíóúÁÉÍÓÚñÑ]$",
+        message = "No se permiten caracteres especiales, espacios al inicio y final, y números en el nombre"
     )
-    @Schema(name = "nombre", example = "Adidas")
+    @Schema(name = "nombre", example = "Polos")
     private String nombre;
 }
