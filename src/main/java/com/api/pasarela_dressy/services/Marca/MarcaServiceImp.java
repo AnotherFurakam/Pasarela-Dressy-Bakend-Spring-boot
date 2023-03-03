@@ -28,8 +28,6 @@ public class MarcaServiceImp implements IMarcaService
     @Autowired
     Capitalize capitalize;
 
-    @Autowired
-
 
     @Override
     public List<MarcaDto> getAll()
@@ -39,6 +37,23 @@ public class MarcaServiceImp implements IMarcaService
 
         //Convirtiendo la lista de entidades a una lista de dto's y retornandola
         return marcasFinded.stream().map(m -> mapper.map(m, MarcaDto.class)).collect(Collectors.toList());
+    }
+
+    @Override
+    public MarcaDto getById(String id_marca)
+    {
+        try
+        {
+            MarcaEntity categoria = marcaRepository.findById(UUID.fromString(id_marca)).orElseThrow(() -> new NotFoundException("Marca no encontrada"));
+
+            return mapper.map(categoria, MarcaDto.class);
+
+        } catch (Exception e)
+        {
+            if (e instanceof NotFoundException) throw new NotFoundException(e.getMessage());
+
+            throw new BadRequestException(e.getMessage());
+        }
     }
 
     @Override
@@ -99,6 +114,8 @@ public class MarcaServiceImp implements IMarcaService
 
         } catch (Exception e)
         {
+            if (e instanceof NotFoundException)
+                throw new NotFoundException(e.getMessage());
             throw new BadRequestException(e.getMessage());
         }
     }
@@ -122,6 +139,8 @@ public class MarcaServiceImp implements IMarcaService
 
         } catch (Exception e)
         {
+            if (e instanceof NotFoundException)
+                throw new NotFoundException(e.getMessage());
             throw new BadRequestException(e.getMessage());
         }
     }
@@ -145,6 +164,8 @@ public class MarcaServiceImp implements IMarcaService
 
         } catch (Exception e)
         {
+            if (e instanceof NotFoundException)
+                throw new NotFoundException(e.getMessage());
             throw new BadRequestException(e.getMessage());
         }
     }

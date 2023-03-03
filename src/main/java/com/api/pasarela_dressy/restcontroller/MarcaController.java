@@ -26,6 +26,12 @@ public class MarcaController
         return marcaService.getAll();
     }
 
+    @GetMapping("/{id_marca}")
+    public MarcaDto getMarcaById(@PathVariable String id_marca)
+    {
+        return marcaService.getById(id_marca);
+    }
+
     @PostMapping
     public MarcaDto createMarca(@Valid @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody CreateMarcaDto marcaDto)
     {
