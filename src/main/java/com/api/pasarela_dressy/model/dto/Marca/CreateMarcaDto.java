@@ -19,8 +19,8 @@ public class CreateMarcaDto
     )
     @NotBlank(message = "El nombre no debe ser nulo ni estar en blanco")
     @Pattern(
-        regexp = "^[a-zA-ZÀ-ÿ\\u00f1\\u00d1]+[a-z A-Z]+(\\s*[a-zA-ZÀ-ÿ\\u00f1\\u00d1]*)*[a-zA-ZÀ-ÿ\\u00f1\\u00d1]$",
-        message = "No se permiten caracteres especiales ni números en el nombre"
+        regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ]?[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]*[a-zA-ZáéíóúÁÉÍÓÚñÑ]$",
+        message = "No se permiten caracteres especiales, números, ni espacios al inicio y final del nombre"
     )
     @Schema(name = "nombre", example = "Adidas")
     private String nombre;

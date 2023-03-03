@@ -9,6 +9,7 @@ import java.util.List;
 public interface IMarcaService
 {
     List<MarcaDto> getAll();
+    MarcaDto getById(String id_marca);
     MarcaDto create(CreateMarcaDto marcaDto);
     MarcaDto update(UpdateMarcaDto marcaDto, String id_marca);
     MarcaDto delete(String id_marca);
