@@ -46,7 +46,7 @@ public class ProductoEntity implements Serializable
     private String sku;
 
     @Column
-    private Integer stock;
+    private Integer stock = 0;
 
     @Column
     private Boolean activo = true;
