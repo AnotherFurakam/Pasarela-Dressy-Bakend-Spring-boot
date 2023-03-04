@@ -61,4 +61,8 @@ public class ProductoEntity implements Serializable
     @ManyToOne
     @JoinColumn(name="id_marca", nullable = false)
     private MarcaEntity marca;
+
+    @OneToMany(mappedBy = "producto")
+    private Set<ImagenEntity> imagenes;
+
 }
