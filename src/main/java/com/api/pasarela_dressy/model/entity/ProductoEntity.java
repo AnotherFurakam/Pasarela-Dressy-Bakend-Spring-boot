@@ -65,4 +65,7 @@ public class ProductoEntity implements Serializable
     @OneToMany(mappedBy = "producto")
     private Set<ImagenEntity> imagenes;
 
+    @OneToMany(mappedBy = "producto")
+    private Set<ProductoTallaEntity> productoTallas;
+
 }
