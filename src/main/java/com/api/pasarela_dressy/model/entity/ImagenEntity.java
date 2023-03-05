@@ -31,7 +31,7 @@ public class ImagenEntity implements Serializable
     private LocalDateTime creado_el;
 
     @Column()
-    private Boolean eliminado;
+    private Boolean eliminado = false;
 
     @ManyToOne()
     @JoinColumn(name = "id_producto", nullable = false)
