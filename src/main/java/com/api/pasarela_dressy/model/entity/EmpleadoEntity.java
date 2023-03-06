@@ -61,4 +61,7 @@ public class EmpleadoEntity implements Serializable{
   @OneToMany(mappedBy = "empleado")
   private Set<AsignacionEntity> asignaciones;
 
+  @OneToMany(mappedBy = "empleado")
+  private Set<EntradaEntity> entradas;
+
 }

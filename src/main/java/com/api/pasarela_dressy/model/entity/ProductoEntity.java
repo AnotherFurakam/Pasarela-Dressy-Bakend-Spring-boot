@@ -68,4 +68,7 @@ public class ProductoEntity implements Serializable
     @OneToMany(mappedBy = "producto")
     private Set<ProductoTallaEntity> productoTallas;
 
+    @OneToMany(mappedBy = "producto")
+    private Set<DetalleEntradaEntity> detalleEntradaList;
+
 }

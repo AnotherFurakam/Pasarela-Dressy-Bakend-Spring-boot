@@ -6,7 +6,7 @@ import com.api.pasarela_dressy.model.dto.Producto.ShortProductoDto;
 import com.api.pasarela_dressy.model.dto.ProductoTalla.CreateProductoTallaDto;
 import com.api.pasarela_dressy.model.dto.ProductoTalla.ProductoTallaDto;
 import com.api.pasarela_dressy.model.dto.ProductoTalla.UpdateProductoTallaDto;
-import com.api.pasarela_dressy.model.dto.Talla.ShortTalla;
+import com.api.pasarela_dressy.model.dto.Talla.ShortTallaDto;
 import com.api.pasarela_dressy.model.entity.ProductoEntity;
 import com.api.pasarela_dressy.model.entity.ProductoTallaEntity;
 import com.api.pasarela_dressy.model.entity.TallaEntity;
@@ -74,7 +74,7 @@ public class ProductoTallaServiceImp implements IProductoTallaService
 
                 //Seteando el dto de producto en la respuesta
                 responseExitDto.setProducto(shortProducto);
-                responseExitDto.setTalla(mapper.map(talla, ShortTalla.class));
+                responseExitDto.setTalla(mapper.map(talla, ShortTallaDto.class));
 
                 //Retornando el producto con la cantidad actualizada
                 return responseExitDto;
@@ -95,7 +95,7 @@ public class ProductoTallaServiceImp implements IProductoTallaService
 
             //Seteando el dto de producto en la respuesta
             responseDto.setProducto(shortProducto);
-            responseDto.setTalla(mapper.map(talla, ShortTalla.class));
+            responseDto.setTalla(mapper.map(talla, ShortTallaDto.class));
 
             return responseDto;
 
@@ -153,7 +153,7 @@ public class ProductoTallaServiceImp implements IProductoTallaService
 
             //Seteando el dto de producto en la respuesta
             responseDto.setProducto(shortProducto);
-            responseDto.setTalla(mapper.map(talla, ShortTalla.class));
+            responseDto.setTalla(mapper.map(talla, ShortTallaDto.class));
 
             return responseDto;
 

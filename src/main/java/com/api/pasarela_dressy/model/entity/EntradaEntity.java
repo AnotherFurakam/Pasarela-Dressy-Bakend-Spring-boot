@@ -14,33 +14,36 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @Entity
-@Table(name = "proveedores")
-public class ProveedorEntity implements Serializable
+@Table(name = "entradas")
+public class EntradaEntity implements Serializable
 {
+
     @Serial
     private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id_proveedor;
-
-    @Column(length = 100)
-    private String nombre;
-
-    @Column(length = 500)
-    private String direccion;
-
-    @Column(columnDefinition = "char(9)")
-    private String telefono;
+    private UUID id_entrada;
 
     @Column
     @CreationTimestamp
     private LocalDateTime creado_el;
 
     @Column
-    private Boolean eliminado = false;
+    private Boolean ejecutado = Boolean.FALSE;
 
-    @OneToMany(mappedBy = "proveedor")
-    private Set<EntradaEntity> entradas;
+    @Column
+    private Boolean eliminado = Boolean.FALSE;
+
+    @ManyToOne
+    @JoinColumn(name = "id_proveedor", nullable = false)
+    private ProveedorEntity proveedor;
+
+    @ManyToOne
+    @JoinColumn(name = "id_empleado", nullable = false)
+    private EmpleadoEntity empleado;
+
+    @OneToMany(mappedBy = "entrada")
+    private Set<DetalleEntradaEntity> detalleEntradaList;
 
 }

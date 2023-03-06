@@ -7,7 +7,7 @@ import java.util.UUID;
 
 @Data
 @NoArgsConstructor
-public class ShortTalla
+public class ShortTallaDto
 {
     private UUID id_talla;
     private String nombre;
