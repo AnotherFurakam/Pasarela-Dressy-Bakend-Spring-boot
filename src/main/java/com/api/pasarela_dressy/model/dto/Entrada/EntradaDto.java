@@ -15,7 +15,7 @@ public class EntradaDto
 {
     private UUID id_entrada;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime creado_el;
     private Boolean ejecutado;
     private ShortProveedorDto proveedor;

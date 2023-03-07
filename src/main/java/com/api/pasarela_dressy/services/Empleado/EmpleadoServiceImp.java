@@ -9,6 +9,7 @@ import com.api.pasarela_dressy.model.dto.Empleado.EmpleadoDto;
 import com.api.pasarela_dressy.model.dto.Empleado.UpdateEmpleadoDto;
 import com.api.pasarela_dressy.model.entity.EmpleadoEntity;
 import com.api.pasarela_dressy.repository.EmpleadoRepository;
+import com.api.pasarela_dressy.utils.mappers.EmpleadoMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -26,27 +27,119 @@ public class EmpleadoServiceImp implements EmpleadoService
     EmpleadoRepository empleadoRepository;
 
     @Autowired
-    ModelMapper mapper;
+    EmpleadoMapper empleadoMapper;
+
+    //? Private Methods
+
+    /**
+     * Esta función encuentra un empleado mediante su id, en caso de no enconrtarlo lanza un error 404 Not Found
+     *
+     * @param id_empleado
+     * @return El empleado encontrado mediante su id
+     */
+    private EmpleadoEntity getEmpleadoById(String id_empleado)
+    {
+        EmpleadoEntity empleado = null;
+        try
+        {
+            empleado = empleadoRepository.findById(UUID.fromString(id_empleado)).orElseThrow(() -> new NotFoundException("Empleado no encontrado"));
+        } catch (Exception e)
+        {
+            if (e instanceof NotFoundException) throw new NotFoundException(e.getMessage());
+            throw new BadRequestException(e.getMessage());
+        }
+
+        return empleado;
+    }
+
+    /**
+     * Comprueba si el dni o correo se repite en la tabla de empleados.
+     * Cuando vayamos a crear un empleado solo le pasamos el dni, correo y empleado en null para que
+     * este método verifique que no se repita los datos en la tabla.<br>
+     * Cuando se va a actualizar debemos dar como parametro empleado la entidad a actualizar
+     * con el fin de que el método haga la comparación respectiva y detecte si el dni o email se repite
+     * en otras entidades excepto en la misma y lance los errores correspondientes.
+     * En caso de no encontrarse repeticiones simplemento no devuelve errores.
+     *
+     * @param dni_empleado
+     * @param correo_empleado
+     * @param empleado
+     */
+    private void existDuplicateData(
+        String dni_empleado,
+        String correo_empleado,
+        EmpleadoEntity empleado
+    )
+    {
+        //Creando lista que contendrá los errores de Unique constraint
+        ArrayList<String> uniqueErrors = new ArrayList<>();
+
+        //Verificando si el dni ya existe
+        EmpleadoEntity dni = empleadoRepository.getByDni(dni_empleado);
+
+        //En caso de existir se añade a la lista de errores
+        if (dni != null) uniqueErrors.add("El dni: " + dni_empleado + ", ya existe.");
+
+        //Verificando si el email ya existe
+        EmpleadoEntity email = empleadoRepository.getByCorreo(correo_empleado);
+
+        //En caso de existir se añade a la lista de errores
+        if (email != null) uniqueErrors.add("El correo: " + correo_empleado + ", ya existe");
+
+        //Comprobando si el empleado es diferente de nulo
+        if (empleado != null)
+        {
+            //Comprobando si existe un empleado con el mismo email
+            if (email != null)
+            {
+                //Si es diferente del email del empleado a editar entonces lanza el error
+                if (!empleado.getCorreo().equals(email.getCorreo()))
+                {
+                    throw new UniqueFieldException("Datos ya existentes", uniqueErrors);
+                }
+            }
+            //Comprobando si existe un empleado con el mismo dni
+            if (dni != null)
+            {
+                //Si se diferente del dni del empleado a editar entonces laza el error
+                if (!empleado.getDni().equals(dni.getDni()))
+                {
+                    throw new UniqueFieldException("Datos ya existentes", uniqueErrors);
+                }
+            }
+        } else
+        {
+            //Comprobando que alguno de los datos ya existan
+            if (email != null || dni != null)
+            {
+                //Lanzando error con los eroers correspondientes
+                throw new UniqueFieldException("Datos ya existentes", uniqueErrors);
+            }
+        }
+    }
+
+    //? Services Methods
 
     @Override
     public List<EmpleadoDto> getAll()
     {
         List<EmpleadoEntity> empleados = empleadoRepository.getAllUndeleted();
 
-        return empleados.stream().map(e -> mapper.map(e, EmpleadoDto.class)).toList();
+        return empleadoMapper.toListDto(empleados);
     }
 
     @Override
     public EmpleadoDto getById(String id_empleado)
     {
-        try {
-            EmpleadoEntity empleadoEntity = empleadoRepository.findById(UUID.fromString(id_empleado)).orElseThrow(() -> new NotFoundException("Empleado no encontrado"));
-
+        try
+        {
+            EmpleadoEntity empleadoEntity = getEmpleadoById(id_empleado);
             if (empleadoEntity.getEliminado()) throw new BadRequestException("El empleado está eliminado");
 
-            return mapper.map(empleadoEntity, EmpleadoDto.class);
+            return empleadoMapper.toDto(empleadoEntity);
 
-        } catch (Exception e) {
+        } catch (Exception e)
+        {
             throw new BadRequestException(e.getMessage());
         }
     }
@@ -54,51 +147,44 @@ public class EmpleadoServiceImp implements EmpleadoService
     @Override
     public EmpleadoDto create(CreateEmpleadoDto empleado)
     {
-        //Creando lista que contendrá los errores de Unique constraint
-        ArrayList<String> uniqueErrors = new ArrayList<>();
-
-        //Verificando si el dni ya existe
-        EmpleadoEntity dni = empleadoRepository.getByDni(empleado.getDni());
-
-        //En caso de existir se añade a la lista de errores
-        if (dni != null) uniqueErrors.add("El dni: " + empleado.getDni() + ", ya existe.");
-
-        //Verificando si el email ya existe
-        EmpleadoEntity email = empleadoRepository.getByCorreo(empleado.getCorreo());
-
-        //En caso de existir se añade a la lista de errores
-        if (email != null) uniqueErrors.add("El correo: " + empleado.getCorreo() + ", ya existe");
-
-        //Comprobando que alguno de los datos ya existan
-        if (email != null || dni != null) {
-            //Lanzando error con los eroers correspondientes
-            throw new UniqueFieldException("Datos ya existentes", uniqueErrors);
-        }
+        //Comprobando si existen datos duplicados
+        this.existDuplicateData(empleado.getDni(), empleado.getCorreo(), null);
 
         //Mapeando datos del dto a la entidad
-        EmpleadoEntity empleadoEntity = mapper.map(empleado, EmpleadoEntity.class);
+        EmpleadoEntity empleadoEntity = empleadoMapper.toEntity(empleado);
 
         //Asignando el número de dni como contaseña automaticamente
         //(Esto podrá ser cambiado por el usuario mediante el endpoint correspondiente)
         empleadoEntity.setContrasenia(empleado.getDni());
 
-        return mapper.map(empleadoRepository.save(empleadoEntity), EmpleadoDto.class);
+        return empleadoMapper.toDto(empleadoRepository.save(empleadoEntity));
 
     }
 
     @Override
-    public EmpleadoDto update(UpdateEmpleadoDto empleado, String id_empleado)
+    public EmpleadoDto update(
+        UpdateEmpleadoDto empleado,
+        String id_empleado
+    )
     {
-        try {
-            EmpleadoEntity empleadoEntity = empleadoRepository.findById(UUID.fromString(id_empleado)).orElseThrow(() -> new NotFoundException("Empleado no encontrado"));
+        try
+        {
+            //Obteniendo el empleado mediante su id
+            EmpleadoEntity empleadoEntity = this.getEmpleadoById(id_empleado);
 
+            //Comprobando si esta eliminado y lanzando el error correspondiente
             if (empleadoEntity.getEliminado()) throw new BadRequestException("El empleado está eliminado");
 
-            mapper.map(empleado, empleadoEntity);
+            //Comprobando si los valores únicos son diferentes al que tiene actualmente y determinar su duplicidad para lanzar el error correspondiente
+            this.existDuplicateData(empleado.getDni(), empleado.getCorreo(), empleadoEntity);
 
-            return mapper.map(empleadoRepository.save(empleadoEntity), EmpleadoDto.class);
+            //Mapeando los datos del dto a la entidad
+            empleadoMapper.updateEntity(empleado, empleadoEntity);
 
-        } catch (Exception e) {
+            return empleadoMapper.toDto(empleadoRepository.save(empleadoEntity));
+
+        } catch (Exception e)
+        {
             throw new BadRequestException(e.getMessage());
         }
     }
@@ -106,11 +192,10 @@ public class EmpleadoServiceImp implements EmpleadoService
     @Override
     public EmpleadoDto delete(String id_empleado)
     {
-        try {
-            EmpleadoEntity empleadoEntity = empleadoRepository.findById(UUID.fromString(id_empleado)).orElseThrow(() -> new NotFoundException("Empleado no encontrado"));
-
-            //Comprobando si el empleado ya fue eliminado
-            if (empleadoEntity.getEliminado()) throw new BadRequestException("El empleado fue eliminado");
+        try
+        {
+            EmpleadoEntity empleadoEntity = this.getEmpleadoById(id_empleado);
+            if (empleadoEntity.getEliminado()) throw new BadRequestException("El empleado está eliminado");
 
             //Eliminando empleado de forma lógica
             empleadoEntity.setEliminado(true);
@@ -119,9 +204,10 @@ public class EmpleadoServiceImp implements EmpleadoService
             empleadoEntity.setActivo(false);
 
 
-            return mapper.map(empleadoRepository.save(empleadoEntity), EmpleadoDto.class);
+            return empleadoMapper.toDto(empleadoRepository.save(empleadoEntity));
 
-        } catch (Exception e) {
+        } catch (Exception e)
+        {
             throw new BadRequestException(e.getMessage());
         }
     }
@@ -129,8 +215,9 @@ public class EmpleadoServiceImp implements EmpleadoService
     @Override
     public EmpleadoDto restore(String id_empleado)
     {
-        try {
-            EmpleadoEntity empleadoEntity = empleadoRepository.findById(UUID.fromString(id_empleado)).orElseThrow(() -> new NotFoundException("Empleado no encontrado"));
+        try
+        {
+            EmpleadoEntity empleadoEntity = this.getEmpleadoById(id_empleado);
 
             //Comprobando si el empleado ya fue eliminado
             if (!empleadoEntity.getEliminado()) throw new BadRequestException("El empleado no está eliminado");
@@ -141,9 +228,10 @@ public class EmpleadoServiceImp implements EmpleadoService
             //Desabilitando empleado automaticamente
             empleadoEntity.setActivo(true);
 
-            return mapper.map(empleadoRepository.save(empleadoEntity), EmpleadoDto.class);
+            return empleadoMapper.toDto(empleadoRepository.save(empleadoEntity));
 
-        } catch (Exception e) {
+        } catch (Exception e)
+        {
             throw new BadRequestException(e.getMessage());
         }
     }
@@ -151,17 +239,19 @@ public class EmpleadoServiceImp implements EmpleadoService
     @Override
     public EmpleadoDto disable(String id_empleado)
     {
-        try {
-            EmpleadoEntity empleadoEntity = empleadoRepository.findById(UUID.fromString(id_empleado)).orElseThrow(() -> new NotFoundException("Empleado no encontrado"));
+        try
+        {
+            EmpleadoEntity empleadoEntity = this.getEmpleadoById(id_empleado);
 
             if (empleadoEntity.getEliminado()) throw new BadRequestException("El empleado está eliminado");
             if (!empleadoEntity.getActivo()) throw new BadRequestException("El empleado ya está desabilitado");
 
             empleadoEntity.setActivo(false);
 
-            return mapper.map(empleadoRepository.save(empleadoEntity), EmpleadoDto.class);
+            return empleadoMapper.toDto(empleadoRepository.save(empleadoEntity));
 
-        } catch (Exception e) {
+        } catch (Exception e)
+        {
             throw new BadRequestException(e.getMessage());
         }
     }
@@ -169,27 +259,33 @@ public class EmpleadoServiceImp implements EmpleadoService
     @Override
     public EmpleadoDto enable(String id_empleado)
     {
-        try {
-            EmpleadoEntity empleadoEntity = empleadoRepository.findById(UUID.fromString(id_empleado)).orElseThrow(() -> new NotFoundException("Empleado no encontrado"));
+        try
+        {
+            EmpleadoEntity empleadoEntity = this.getEmpleadoById(id_empleado);
 
             if (empleadoEntity.getEliminado()) throw new BadRequestException("El empleado está eliminado");
             if (empleadoEntity.getActivo()) throw new BadRequestException("El empleado ya está activo");
 
             empleadoEntity.setActivo(true);
 
-            return mapper.map(empleadoRepository.save(empleadoEntity), EmpleadoDto.class);
+            return empleadoMapper.toDto(empleadoRepository.save(empleadoEntity));
 
-        } catch (Exception e) {
+        } catch (Exception e)
+        {
             throw new BadRequestException(e.getMessage());
         }
     }
 
     @Override
-    public EmpleadoDto changePassword(String id_empleado, ChangePasswordDto passwordDto)
+    public EmpleadoDto changePassword(
+        String id_empleado,
+        ChangePasswordDto passwordDto
+    )
     {
-        try {
+        try
+        {
             //Buscando empleado mediante su uuid
-            EmpleadoEntity empleadoEntity = empleadoRepository.findById(UUID.fromString(id_empleado)).orElseThrow(() -> new NotFoundException("Empleado no encontrado"));
+            EmpleadoEntity empleadoEntity = this.getEmpleadoById(id_empleado);
 
             //Verificando si el no está empleado esta eliminado
             if (empleadoEntity.getEliminado()) throw new BadRequestException("El empleado está eliminado");
@@ -200,9 +296,10 @@ public class EmpleadoServiceImp implements EmpleadoService
             empleadoEntity.setContrasenia(passwordDto.getContrasenia());
 
             //Retornando el mapeado de la entidad del empleado que se guardó en la base de datos
-            return mapper.map(empleadoRepository.save(empleadoEntity), EmpleadoDto.class);
+            return empleadoMapper.toDto(empleadoRepository.save(empleadoEntity));
 
-        } catch (Exception e) {
+        } catch (Exception e)
+        {
             throw new BadRequestException(e.getMessage());
         }
     }

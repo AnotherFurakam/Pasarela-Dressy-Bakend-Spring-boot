@@ -17,4 +17,7 @@ public interface AsignacionRepository extends CrudRepository<AsignacionEntity, U
 
     @Query(value = "Select a From AsignacionEntity a Where a.eliminado = 0")
     List<AsignacionEntity> getAllUndelete();
+
+    @Query(value = "Select a From AsignacionEntity a Where a.empleado = ?1")
+    List<AsignacionEntity> getByEmpleado(EmpleadoEntity empleado);
 }
