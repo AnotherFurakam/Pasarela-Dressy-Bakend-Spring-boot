@@ -14,4 +14,7 @@ public interface MarcaRepository extends CrudRepository<MarcaEntity, UUID>
 
     @Query("Select e from MarcaEntity e where e.nombre = ?1")
     MarcaEntity getByNombre(String nombre);
+
+    @Query("Select e from MarcaEntity e where e.nombre = ?1 and e.id_marca != ?2")
+    MarcaEntity getByNombreAndId(String nombre, UUID id_marca);
 }

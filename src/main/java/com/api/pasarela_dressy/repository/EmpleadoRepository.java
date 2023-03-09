@@ -17,4 +17,10 @@ public interface EmpleadoRepository extends CrudRepository<EmpleadoEntity, UUID>
 
     @Query("Select e from EmpleadoEntity e where e.correo = ?1")
     EmpleadoEntity getByCorreo(String email);
+
+    @Query("Select e from EmpleadoEntity e where e.dni = ?1 and e.id_empleado != ?2")
+    EmpleadoEntity getByDniAndId(String dni, UUID id_empleado);
+
+    @Query("Select e from EmpleadoEntity e where e.correo = ?1 and e.id_empleado != ?2")
+    EmpleadoEntity getByCorreoAndId(String correo, UUID id_empleado);
 }

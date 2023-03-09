@@ -11,7 +11,6 @@ import java.util.List;
 @Data
 public class UniqueErrorDto
 {
-    private String  message;
     private int status;
-    private List<String> errors;
+    private List<String> message;
 }

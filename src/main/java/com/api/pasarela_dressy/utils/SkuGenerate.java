@@ -15,11 +15,11 @@ public class SkuGenerate
     @Autowired
     ProductoRepository productoRepository;
 
-    public String createSkuCode(ProductoEntity producto, MarcaEntity marca, CategoriaEntity categoria)
+    public String createSkuCode(ProductoEntity producto)
     {
         String productoCod = producto.getNombre().substring(0, 3);
-        String marcaCod = marca.getNombre().substring(0, 3);
-        String categoriaCod = categoria.getNombre().substring(0, 3);
+        String marcaCod = producto.getMarca().getNombre().substring(0, 3);
+        String categoriaCod = producto.getCategoria().getNombre().substring(0, 3);
         String sku = productoCod + "-" + marcaCod + "-" + categoriaCod + "-" + "1";
         while (true)
         {

@@ -12,6 +12,10 @@ import com.api.pasarela_dressy.model.entity.RolEntity;
 import com.api.pasarela_dressy.repository.AsignacionRepository;
 import com.api.pasarela_dressy.repository.EmpleadoRepository;
 import com.api.pasarela_dressy.repository.RoleRepository;
+import com.api.pasarela_dressy.services.Empleado.EmpleadoService;
+import com.api.pasarela_dressy.services.Empleado.EmpleadoServiceImp;
+import com.api.pasarela_dressy.services.Role.RoleServiceImp;
+import com.api.pasarela_dressy.utils.mappers.AsignacionMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,6 +32,9 @@ public class AsignacionServiceImpl implements AsignacionService
     ModelMapper mapper;
 
     @Autowired
+    AsignacionMapper asignacionMapper;
+
+    @Autowired
     AsignacionRepository asignacionRepository;
 
     @Autowired
@@ -36,118 +43,95 @@ public class AsignacionServiceImpl implements AsignacionService
     @Autowired
     RoleRepository roleRepository;
 
+    @Autowired
+    EmpleadoServiceImp empleadoServiceImp;
+
+    @Autowired
+    RoleServiceImp roleServiceImp;
+
+    //* Service private methods
+
+    /**
+     * Busca la asignación mediante su id en la base de datos
+     * @param id_asignacion string del id de la asignación a buscar
+     * @return la entidad de la asignación encontrada
+     */
+    private AsignacionEntity getAsigacionById(String id_asignacion)
+    {
+        try
+        {
+            AsignacionEntity asignacionEntity = asignacionRepository.findById(UUID.fromString(id_asignacion)).orElseThrow(() -> new NotFoundException("El empleado no fue encontrado"));
+
+            return asignacionEntity;
+        } catch (Exception e)
+        {
+            if (e instanceof NotFoundException) throw new NotFoundException(e.getMessage());
+            throw new BadRequestException(e.getMessage());
+        }
+    }
+
+    // * Service methods
     @Override
     public List<AsignacionDto> getAll()
     {
         List<AsignacionEntity> asignacionEntityList = asignacionRepository.getAllUndelete();
 
-        return asignacionEntityList.stream().map(a -> mapper.map(a, AsignacionDto.class)).collect(Collectors.toList());
+        return asignacionMapper.toListDto(asignacionEntityList);
     }
 
     @Override
     public AsignacionDto getById(String id_asignacion)
     {
-        try
-        {
-            //Obteniendo información del empleado
-            AsignacionEntity asignacionEntity = asignacionRepository.findById(UUID.fromString(id_asignacion)).orElseThrow(() -> new NotFoundException("El empleado no fue encontrado"));
-
-            //Comprobando si la asignación esta eliminada
-            if (asignacionEntity.getEliminado())
-                throw new BadRequestException("La asignación fue eliminada, para restaurarla solo debe asignarlo nuevamente");
-
-            return mapper.map(asignacionEntity, AsignacionDto.class);
-        } catch (Exception e)
-        {
-            if (e instanceof NotFoundException) throw new NotFoundException(e.getMessage());
-            throw new BadRequestException(e.getMessage());
-        }
+        AsignacionEntity asignacionEntity = this.getAsigacionById(id_asignacion);
+        return asignacionMapper.toDto(asignacionEntity);
     }
 
     @Override
-    public AsignacionDto create(CreateAsignacionDto asignacion)
+    public AsignacionDto create(CreateAsignacionDto asignacionDto)
     {
-        try
+        EmpleadoEntity empleado = empleadoServiceImp.getEmpleadoById(asignacionDto.getId_empleado());
+
+        if (!empleado.getActivo() || empleado.getEliminado())
+            throw new BadRequestException("El empleado fue eliminado o no esta activo");
+
+        RolEntity rol = roleServiceImp.getRolById(asignacionDto.getId_rol());
+
+        if (rol.getEliminado()) throw new BadRequestException("El rol fue eliminado");
+
+        AsignacionEntity existAsignacion = asignacionRepository.getByEmpladoAndRol(empleado, rol);
+        if (existAsignacion != null)
         {
-            //Obteniendo información del empleado
-            EmpleadoEntity empleado = empleadoRepository.findById(UUID.fromString(asignacion.getId_empleado())).orElseThrow(() -> new NotFoundException("El empleado no fue encontrado"));
-
-            //Comprobando que el empleado no este eliminado o desabilitado
-            if (!empleado.getActivo() || empleado.getEliminado())
-                throw new BadRequestException("El empleado fue eliminado o no esta activo");
-
-            //Obteniendo informacion del rol
-            RolEntity rol = roleRepository.findById(UUID.fromString(asignacion.getId_rol())).orElseThrow(() -> new NotFoundException("El rol no fue encontrado"));
-
-            //Comprobando que el rol no este eliminado
-            if (rol.getEliminado()) throw new BadRequestException("El rol fue eliminado");
-
-            AsignacionEntity existAsignacion = asignacionRepository.getByEmpladoAndRol(empleado, rol);
-            if (existAsignacion != null)
+            //* En caso de que la asignacion existente esté eliminada se restaurará y guardará los campbios de forma automático. Luego se se retornará
+            if (existAsignacion.getEliminado())
             {
-                //Restaurando asignación ya creada
-                if (existAsignacion.getEliminado())
-                {
-                    existAsignacion.setEliminado(false);
-                    return mapper.map(asignacionRepository.save(existAsignacion), AsignacionDto.class);
-                } else
-                {
-                    return mapper.map(existAsignacion, AsignacionDto.class);
-                }
-
+                existAsignacion.setEliminado(false);
+                return mapper.map(asignacionRepository.save(existAsignacion), AsignacionDto.class);
+            } else //* Si no está eliminada se devolverá un BadRequest indicando que ya existe
+            {
+                throw new BadRequestException("La asignación ya fue creada");
             }
-
-            //En caso de no existir una asignación con el mismo empleado y rol se procederá con el registro
-
-            //Creando la entdidad de asignación
-            AsignacionEntity asignacionEntity = new AsignacionEntity();
-
-            //Agregando el empleado y rol
-            asignacionEntity.setEmpleado(empleado);
-            asignacionEntity.setRol(rol);
-
-            //Guardando en la bd y mapeando la asignación en el dto de respuesta
-            AsignacionDto asignacionDto = mapper.map(asignacionRepository.save(asignacionEntity), AsignacionDto.class);
-
-            //Asignando los datos del empleado al dto de respuesta
-            asignacionDto.setEmpleado(mapper.map(empleado, ShortEmpleadoDto.class));
-
-            //Asignando los datos del rol al dto de respuesta
-            asignacionDto.setRol(mapper.map(rol, ShortRolDto.class));
-
-            //Retornando el dto de respuesta
-            return asignacionDto;
-        } catch (Exception e)
-        {
-            //Verificando si el error es un Not Found y lanzando el error
-            if (e instanceof NotFoundException) throw new NotFoundException(e.getMessage());
-
-            //De ser otro tipo de error lanzar un RuntimeException
-            //esto se hace para que el controller advice lo detecte
-            throw new BadRequestException(e.getMessage());
         }
+
+        //* En caso de no existir una asignación con el mismo empleado y rol se procederá con el registro
+
+        AsignacionEntity asignacionEntity = new AsignacionEntity();
+        asignacionEntity.setEmpleado(empleado);
+        asignacionEntity.setRol(rol);
+
+        return asignacionMapper.toDto(asignacionRepository.save(asignacionEntity));
     }
 
     @Override
     public AsignacionDto delete(String id_asignacion)
     {
-        try
-        {
-            AsignacionEntity asignacionEntity = asignacionRepository.findById(UUID.fromString(id_asignacion)).orElseThrow(() -> new NotFoundException("La asignación no fue encontrada"));
+        AsignacionEntity asignacionEntity = this.getAsigacionById(id_asignacion);
 
-            if (asignacionEntity.getEliminado()) throw new BadRequestException("La asignación ya fue eliminada");
+        if (asignacionEntity.getEliminado()) throw new BadRequestException("La asignación ya fue eliminada");
 
-            //Eliminanado asignación de forma lógica
-            asignacionEntity.setEliminado(true);
+        //Eliminanado asignación de forma lógica
+        asignacionEntity.setEliminado(true);
 
-            return mapper.map(asignacionRepository.save(asignacionEntity), AsignacionDto.class);
-        } catch (Exception e)
-        {
-
-            if (e instanceof NotFoundException) throw new NotFoundException(e.getMessage());
-
-            throw new BadRequestException(e.getMessage());
-        }
+        return asignacionMapper.toDto(asignacionRepository.save(asignacionEntity));
     }
 
 }

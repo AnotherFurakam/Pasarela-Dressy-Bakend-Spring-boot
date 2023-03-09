@@ -15,4 +15,5 @@ public interface ProductoRepository extends CrudRepository<ProductoEntity, UUID>
 
     @Query("Select e from ProductoEntity e where e.sku = ?1")
     ProductoEntity getBySku(String sku);
+
 }

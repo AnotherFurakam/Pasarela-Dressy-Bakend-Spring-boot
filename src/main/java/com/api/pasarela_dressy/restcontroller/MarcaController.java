@@ -7,6 +7,8 @@ import com.api.pasarela_dressy.services.Marca.IMarcaService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,38 +23,59 @@ public class MarcaController
 
 
     @GetMapping
-    public List<MarcaDto> getAllMarcas()
+    public ResponseEntity<List<MarcaDto>> getAllMarcas()
     {
-        return marcaService.getAll();
+        return new ResponseEntity<>(marcaService.getAll(), HttpStatus.OK);
     }
 
     @GetMapping("/{id_marca}")
-    public MarcaDto getMarcaById(@PathVariable String id_marca)
+    public ResponseEntity<MarcaDto> getMarcaById(
+        @PathVariable
+        String id_marca
+    )
     {
-        return marcaService.getById(id_marca);
+        return new ResponseEntity<>(marcaService.getById(id_marca), HttpStatus.OK);
     }
 
     @PostMapping
-    public MarcaDto createMarca(@Valid @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody CreateMarcaDto marcaDto)
+    public ResponseEntity<MarcaDto> createMarca(
+        @Valid
+        @RequestBody
+        @io.swagger.v3.oas.annotations.parameters.RequestBody
+        CreateMarcaDto marcaDto
+    )
     {
-        return marcaService.create(marcaDto);
+        return new ResponseEntity<>(marcaService.create(marcaDto), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id_marca}")
-    public MarcaDto updateMarca(@Valid @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody UpdateMarcaDto marcaDto, @PathVariable String id_marca)
+    public ResponseEntity<MarcaDto> updateMarca(
+        @Valid
+        @RequestBody
+        @io.swagger.v3.oas.annotations.parameters.RequestBody
+        UpdateMarcaDto marcaDto,
+        @PathVariable
+        String id_marca
+    )
     {
-        return marcaService.update(marcaDto, id_marca);
+        return new ResponseEntity<>(marcaService.update(marcaDto, id_marca), HttpStatus.OK);
     }
 
     @DeleteMapping("/{id_marca}")
-    public MarcaDto deleteMarca(@PathVariable String id_marca)
+    public ResponseEntity<MarcaDto> deleteMarca(
+        @PathVariable
+        String id_marca
+    )
     {
-        return marcaService.delete(id_marca);
+        return new ResponseEntity<>(marcaService.delete(id_marca), HttpStatus.OK);
     }
 
     @PostMapping("/restore/{id_marca}")
-    public MarcaDto restoreMarca(@PathVariable String id_marca)
+    public ResponseEntity<MarcaDto> restoreMarca(
+        @PathVariable
+        String id_marca
+    )
     {
-        return marcaService.restore(id_marca);
+        return new ResponseEntity<>(marcaService.restore(id_marca), HttpStatus.OK);
     }
 }

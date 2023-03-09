@@ -2,6 +2,7 @@ package com.api.pasarela_dressy.model.dto.Producto;
 
 import com.api.pasarela_dressy.model.dto.Categoria.ShortCategoriaDto;
 import com.api.pasarela_dressy.model.dto.Marca.ShortMarcaDto;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -18,6 +19,8 @@ public class ProductoDto
     private String descripcion;
     private BigDecimal precio;
     private BigDecimal precio_oferta;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime creado_el;
     private String sku;
     private int  stock;

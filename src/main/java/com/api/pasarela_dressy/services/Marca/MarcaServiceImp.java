@@ -2,16 +2,19 @@ package com.api.pasarela_dressy.services.Marca;
 
 import com.api.pasarela_dressy.exception.BadRequestException;
 import com.api.pasarela_dressy.exception.NotFoundException;
+import com.api.pasarela_dressy.exception.UniqueFieldException;
 import com.api.pasarela_dressy.model.dto.Marca.CreateMarcaDto;
 import com.api.pasarela_dressy.model.dto.Marca.MarcaDto;
 import com.api.pasarela_dressy.model.dto.Marca.UpdateMarcaDto;
 import com.api.pasarela_dressy.model.entity.MarcaEntity;
 import com.api.pasarela_dressy.repository.MarcaRepository;
 import com.api.pasarela_dressy.utils.Capitalize;
+import com.api.pasarela_dressy.utils.mappers.MarcaMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -19,8 +22,6 @@ import java.util.stream.Collectors;
 @Service
 public class MarcaServiceImp implements IMarcaService
 {
-    @Autowired
-    ModelMapper mapper;
 
     @Autowired
     MarcaRepository marcaRepository;
@@ -28,145 +29,138 @@ public class MarcaServiceImp implements IMarcaService
     @Autowired
     Capitalize capitalize;
 
+    @Autowired
+    MarcaMapper marcaMapper;
 
+    //* Utils methdos
+
+    /**
+     * Obtiene los datos de la marca mediante su id
+     *
+     * @param id_marca Id de la marca como String
+     * @return MarcaEntity con los datos correspondientes
+     */
+    public MarcaEntity getMarcaById(String id_marca)
+    {
+        try
+        {
+            return marcaRepository.findById(UUID.fromString(id_marca)).orElseThrow(() -> new NotFoundException("Marca no encontrada"));
+        } catch (RuntimeException e)
+        {
+            if (e instanceof NotFoundException) throw new NotFoundException(e.getMessage());
+            throw new BadRequestException(e.getMessage());
+        }
+    }
+
+    /**
+     * Verifica si la marca con el nombre indicado ya existe en la base de datos
+     * * Toma en cuenta todos los registros sin excepción
+     *
+     * @param nombre
+     */
+    private void existDuplicateData(String nombre)
+    {
+        List<String> errors = new ArrayList<>();
+        MarcaEntity findedByName = marcaRepository.getByNombre(nombre);
+        if (findedByName != null)
+        {
+            errors.add("Ya existe la marca con el nombre " + nombre);
+            throw new UniqueFieldException(errors);
+        }
+    }
+
+    /**
+     * Verifica si la marca con el nombre indicado ya existe en la base de dotos
+     ** Toma en cuenta todos los registros menos el que tenga el id de marca indicado
+     * @param nombre nombre de la marca a comprobar
+     * @param id_marca id de la marca a excluir del filtrado
+     */
+    private void existDuplicateDataWhenUpdate(
+        String nombre,
+        UUID id_marca
+    )
+    {
+        List<String> errors = new ArrayList<>();
+        MarcaEntity findedByNameAndId = marcaRepository.getByNombreAndId(nombre, id_marca);
+        if (findedByNameAndId != null)
+        {
+            errors.add("Ya existe la marca con el nombre " + nombre);
+            throw new UniqueFieldException(errors);
+        }
+    }
+
+
+    //* Service methods
     @Override
     public List<MarcaDto> getAll()
     {
-        //Obteniendo todas las marcas que no están eliminadas
         List<MarcaEntity> marcasFinded = marcaRepository.getAllUndeleted();
 
-        //Convirtiendo la lista de entidades a una lista de dto's y retornandola
-        return marcasFinded.stream().map(m -> mapper.map(m, MarcaDto.class)).collect(Collectors.toList());
+        return marcaMapper.toDtoList(marcasFinded);
     }
 
     @Override
     public MarcaDto getById(String id_marca)
     {
-        try
-        {
-            MarcaEntity categoria = marcaRepository.findById(UUID.fromString(id_marca)).orElseThrow(() -> new NotFoundException("Marca no encontrada"));
-
-            return mapper.map(categoria, MarcaDto.class);
-
-        } catch (Exception e)
-        {
-            if (e instanceof NotFoundException) throw new NotFoundException(e.getMessage());
-
-            throw new BadRequestException(e.getMessage());
-        }
+        MarcaEntity categoria = this.getMarcaById(id_marca);
+        return marcaMapper.toDto(categoria);
     }
 
     @Override
     public MarcaDto create(CreateMarcaDto marcaDto)
     {
-        //Capitalizando el nombre de la marca (primera letra en mayúscula)
         String capitalizedName = capitalize.CapitalizeText(marcaDto.getNombre());
         marcaDto.setNombre(capitalizedName);
 
-        //Buscando si una marca con el mismo nombre ya existe
-        MarcaEntity findedMarca = marcaRepository.getByNombre(capitalizedName);
+        this.existDuplicateData(capitalizedName);
 
-        //Verificando si se encontró la marca y lanzando el error correspondiente si así es
-        if (findedMarca != null)
-            throw new BadRequestException("La marca con el nombre '" + capitalizedName + "' ya existe");
+        MarcaEntity marca = marcaMapper.toEntity(marcaDto);
 
-        //Mapeando los datos de la marca a registrar
-        MarcaEntity marca = mapper.map(marcaDto, MarcaEntity.class);
-
-        //Guardando la marca en la base de datos y retornando sus dotos
-        return mapper.map(marcaRepository.save(marca), MarcaDto.class);
+        return marcaMapper.toDto(marcaRepository.save(marca));
     }
 
     @Override
-    public MarcaDto update(UpdateMarcaDto marcaDto, String id_marca)
+    public MarcaDto update(
+        UpdateMarcaDto marcaDto,
+        String id_marca
+    )
     {
-        //Capitalizando la primera letra del nombre de la marca
         String capitalizedName = capitalize.CapitalizeText(marcaDto.getNombre());
         marcaDto.setNombre(capitalizedName);
 
-        try
-        {
-            //Obteniendo la marca por su id
-            MarcaEntity marca = marcaRepository.findById(UUID.fromString(id_marca)).orElseThrow(() -> new NotFoundException("La marca con el uuid: " + id_marca + " no fue encontrado"));
+        MarcaEntity marca = this.getMarcaById(id_marca);
 
-            //Verificando si la marca fue eliminada
-            if (marca.getEliminado())
-                throw new BadRequestException("La marca " + marca.getNombre() + " esta eliminada");
+        if (marca.getEliminado()) throw new BadRequestException("La marca " + marca.getNombre() + " esta eliminada");
 
-            //Comprobando si el nombre de la entidad en la bd es el mimso que el del dto
-            if (!marca.getNombre().equals(capitalizedName))
-            {
-                //Verificando si el nombre esta disponible
-                MarcaEntity marcaByName = marcaRepository.getByNombre(capitalizedName);
-                if (marcaByName != null)
-                    throw new BadRequestException("Ya existe una marca con el nombre " + capitalizedName);
+        this.existDuplicateDataWhenUpdate(capitalizedName, marca.getId_marca());
 
-                //Actualizando información de la entidad
-                mapper.map(marcaDto, marca);
+        marcaMapper.updateFromDto(marcaDto, marca);
 
-                //Actualizando los datos en la bd y retornando el dto
-                return mapper.map(marcaRepository.save(marca), MarcaDto.class);
-
-            }
-
-            //Retornando el objeto mismo debido a que el nombre es el mismo
-            return mapper.map(marca, MarcaDto.class);
-
-        } catch (Exception e)
-        {
-            if (e instanceof NotFoundException)
-                throw new NotFoundException(e.getMessage());
-            throw new BadRequestException(e.getMessage());
-        }
+        return marcaMapper.toDto(marcaRepository.save(marca));
     }
 
     @Override
     public MarcaDto delete(String id_marca)
     {
-        try
-        {
-            //Obteniendo la marca por su id
-            MarcaEntity marca = marcaRepository.findById(UUID.fromString(id_marca)).orElseThrow(() -> new NotFoundException("La marca con el uuid: " + id_marca + " no fue encontrado"));
+        MarcaEntity marca = this.getMarcaById(id_marca);
 
-            //Verificando si la marca fue eliminada
-            if (marca.getEliminado())
-                throw new BadRequestException("La marca " + marca.getNombre() + " esta eliminada");
+        if (marca.getEliminado()) throw new BadRequestException("La marca " + marca.getNombre() + " esta eliminada");
 
-            //Eliminando la marca de forma lógica
-            marca.setEliminado(true);
+        marca.setEliminado(true);
 
-            return mapper.map(marcaRepository.save(marca), MarcaDto.class);
-
-        } catch (Exception e)
-        {
-            if (e instanceof NotFoundException)
-                throw new NotFoundException(e.getMessage());
-            throw new BadRequestException(e.getMessage());
-        }
+        return marcaMapper.toDto(marcaRepository.save(marca));
     }
 
     @Override
     public MarcaDto restore(String id_marca)
     {
-        try
-        {
-            //Obteniendo la marca por su id
-            MarcaEntity marca = marcaRepository.findById(UUID.fromString(id_marca)).orElseThrow(() -> new NotFoundException("La marca con el uuid: " + id_marca + " no fue encontrado"));
+        MarcaEntity marca = this.getMarcaById(id_marca);
 
-            //Verificando si la marca fue eliminada
-            if (!marca.getEliminado())
-                throw new BadRequestException("La marca " + marca.getNombre() + " no esta eliminada");
+        if (!marca.getEliminado())
+            throw new BadRequestException("La marca " + marca.getNombre() + " no esta eliminada");
 
-            //Restaurando la marca de forma lógica
-            marca.setEliminado(false);
+        marca.setEliminado(false);
 
-            return mapper.map(marcaRepository.save(marca), MarcaDto.class);
-
-        } catch (Exception e)
-        {
-            if (e instanceof NotFoundException)
-                throw new NotFoundException(e.getMessage());
-            throw new BadRequestException(e.getMessage());
-        }
+        return marcaMapper.toDto(marcaRepository.save(marca));
     }
 }

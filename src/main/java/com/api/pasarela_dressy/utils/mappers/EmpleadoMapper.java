@@ -1,10 +1,7 @@
 package com.api.pasarela_dressy.utils.mappers;
 
-import com.api.pasarela_dressy.exception.BadRequestException;
-import com.api.pasarela_dressy.model.dto.Empleado.CreateEmpleadoDto;
 import com.api.pasarela_dressy.model.dto.Empleado.EmpleadoDto;
 import com.api.pasarela_dressy.model.dto.Empleado.UpdateEmpleadoDto;
-import com.api.pasarela_dressy.model.dto.asignacion.AsignacionDto;
 import com.api.pasarela_dressy.model.dto.asignacion.ShortAsignacionDto;
 import com.api.pasarela_dressy.model.entity.AsignacionEntity;
 import com.api.pasarela_dressy.model.entity.EmpleadoEntity;
@@ -14,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class EmpleadoMapper
@@ -28,7 +24,7 @@ public class EmpleadoMapper
     /**
      * Mapea los datos de una clase de tipo EmpleadoEntity a EmpleadoDto
      *
-     * @param empleadoEntity
+     * @param empleadoEntity entidad de empleado a convertir
      * @return EmpleadoDto
      */
     public EmpleadoDto toDto(EmpleadoEntity empleadoEntity)
@@ -47,8 +43,8 @@ public class EmpleadoMapper
 
     /**
      *
-     * @param empleadoDto
-     * @return
+     * @param empleadoDto dto del empleado a convertir puede ser el dto de Create o Update
+     * @return entidad de empleado con la información del dto
      */
     public EmpleadoEntity toEntity(Object empleadoDto)
     {
@@ -59,8 +55,8 @@ public class EmpleadoMapper
      * Mapea los datos de una Lista de EmpleadoEntity a una lista de EmpleadoDto hacciendo uso de la funcion toDto
      * para el mapeado individual de cada entidad
      *
-     * @param empleados
-     * @return
+     * @param empleados lista de entidades de empleados
+     * @return lista de dto de empleados
      */
     public List<EmpleadoDto> toListDto(List<EmpleadoEntity> empleados)
     {
@@ -69,10 +65,10 @@ public class EmpleadoMapper
 
     /**
      * Este método actualiza los datos de la entidad por los del dto de entrada
-     * @param empleadoDto
-     * @param empleadoEntity
+     * @param empleadoDto dto que contiene la información actualizada del empleado
+     * @param empleadoEntity entidad del empleado en la que mapearemos la información actualizada
      */
-    public void updateEntity(UpdateEmpleadoDto empleadoDto, EmpleadoEntity empleadoEntity)
+    public void updateEmpleadoFromDto(UpdateEmpleadoDto empleadoDto, EmpleadoEntity empleadoEntity)
     {
         mapper.map(empleadoDto, empleadoEntity);
     }

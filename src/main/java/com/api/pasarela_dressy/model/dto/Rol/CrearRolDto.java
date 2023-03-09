@@ -14,7 +14,7 @@ public class CrearRolDto {
     @Size(min = 3, max = 30, message = "El nombre debe tener como mínimo {min} y como máximo {max} caracteres")
     @NotNull(message = "El nombre no debe ser nulo")
     @NotBlank(message = "El nombre no debe estar vacío")
-    @Pattern(regexp = "^[a-z_a-z]{3,30}$", message = "Formato de rol incorrecto. El formato correcto es: 'ADMIN', 'admin' o 'ADMIN_ALMACEN'.")
+    @Pattern(regexp = "^[A-Z_a-z]{3,30}$", message = "Formato de rol incorrecto. El formato correcto es: 'ADMIN', 'admin' o 'ADMIN_ALMACEN'.")
     @Schema(name = "nombre", example = "ADMINISTRADOR")
     private String nombre;
 }

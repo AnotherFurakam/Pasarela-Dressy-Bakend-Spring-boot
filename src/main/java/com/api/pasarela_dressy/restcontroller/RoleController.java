@@ -16,19 +16,22 @@ import java.util.List;
 @RestController
 @RequestMapping("/rol")
 @Tag(name = "Rol")
-public class RoleController {
+public class RoleController
+{
 
     @Autowired
     RoleService roleService;
 
     @GetMapping
-    public ResponseEntity<List<RolDto>> getRoles(){
+    public ResponseEntity<List<RolDto>> getRoles()
+    {
         return new ResponseEntity<>(roleService.getAll(), HttpStatus.OK);
     }
 
     @GetMapping("/{id_rol}")
     public ResponseEntity<RolDto> getRoleById(
-        @PathVariable String id_rol
+        @PathVariable
+        String id_rol
     )
     {
         return new ResponseEntity<>(roleService.getById(id_rol), HttpStatus.OK);
@@ -37,25 +40,45 @@ public class RoleController {
     @PostMapping
     public ResponseEntity<RolDto> createRole(
         //Valid es para validar los campos y el RequestBody del swagger es para que swagger envie la data en json
-        @Valid @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody CrearRolDto rol
-    ){
+        @Valid
+        @RequestBody
+        @io.swagger.v3.oas.annotations.parameters.RequestBody
+        CrearRolDto rol
+    )
+    {
         return new ResponseEntity<>(roleService.createRole(rol), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id_rol}")
     public ResponseEntity<RolDto> updateRole(
-        @Valid @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody UpdateRolDto rol,
-        @PathVariable String id_rol
-    ){
-        return new ResponseEntity<>(roleService.updateRole(rol,id_rol), HttpStatus.OK);
+        @Valid
+        @RequestBody
+        @io.swagger.v3.oas.annotations.parameters.RequestBody
+        UpdateRolDto rol,
+        @PathVariable
+        String id_rol
+    )
+    {
+        return new ResponseEntity<>(roleService.updateRole(rol, id_rol), HttpStatus.OK);
     }
 
     @DeleteMapping("/{id_rol}")
     public ResponseEntity<RolDto> deleteRole(
-        @PathVariable String id_rol
+        @PathVariable
+        String id_rol
     )
     {
         return new ResponseEntity<>(roleService.deleteRole(id_rol), HttpStatus.OK);
+    }
+
+    @PostMapping("/restor/{id_rol}")
+    public ResponseEntity<RolDto> restore(
+        @Valid
+        @PathVariable
+        String id_rol
+    )
+    {
+        return new ResponseEntity<>(roleService.restoreRole(id_rol), HttpStatus.OK);
     }
 
 }

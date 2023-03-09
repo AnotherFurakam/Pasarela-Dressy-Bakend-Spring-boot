@@ -17,4 +17,6 @@ public interface RoleService {
 
     RolDto deleteRole(String id_rol);
 
+    RolDto restoreRole(String id_rol);
+
 }

@@ -2,20 +2,20 @@ package com.api.pasarela_dressy.services.Categoria;
 
 import com.api.pasarela_dressy.exception.BadRequestException;
 import com.api.pasarela_dressy.exception.NotFoundException;
+import com.api.pasarela_dressy.exception.UniqueFieldException;
 import com.api.pasarela_dressy.model.dto.Categoria.CategoriaDto;
 import com.api.pasarela_dressy.model.dto.Categoria.CreateCategoriaDto;
 import com.api.pasarela_dressy.model.dto.Categoria.UpdateCategoriaDto;
 import com.api.pasarela_dressy.model.entity.CategoriaEntity;
 import com.api.pasarela_dressy.repository.CategoriaRepository;
 import com.api.pasarela_dressy.utils.Capitalize;
-import org.aspectj.weaver.ast.Not;
-import org.modelmapper.ModelMapper;
+import com.api.pasarela_dressy.utils.mappers.CategoriaMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class CategoriaServiceImp implements ICategoriaService
@@ -24,27 +24,71 @@ public class CategoriaServiceImp implements ICategoriaService
     CategoriaRepository categoriaRepository;
 
     @Autowired
-    ModelMapper mapper;
+    Capitalize capitalize;
 
     @Autowired
-    Capitalize capitalize;
+    CategoriaMapper categoriaMapper;
+
+    //* Utils methods
+    public CategoriaEntity getCategoriaById(String id_categoria)
+    {
+        try
+        {
+            return categoriaRepository.findById(UUID.fromString(id_categoria)).orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
+        } catch (RuntimeException e)
+        {
+            throw new BadRequestException("El id ingresado no es válido");
+        }
+
+    }
+
+    private void existDuplicateData(String name)
+    {
+        List<String> errors = new ArrayList<>();
+        CategoriaEntity categoriaEntity = categoriaRepository.getByNombre(name);
+        if (categoriaEntity != null)
+        {
+            errors.add("Ya existe la categoría con el nombre " + categoriaEntity.getNombre());
+            throw new UniqueFieldException(errors);
+        }
+    }
+
+    private void existDuplicateDataWhenUpdate(
+        String name,
+        UUID id_categoria
+    )
+    {
+        List<String> errors = new ArrayList<>();
+        CategoriaEntity existByName = categoriaRepository.findByNameAndId(name, id_categoria);
+        if (existByName != null) {
+            errors.add("Ya existe la categoría con el nombre " + name);
+            throw new UniqueFieldException(errors);
+        }
+    }
+
+
+    //* Service Methods
+    @Override
+    public CategoriaDto findById(String id_categoria)
+    {
+        CategoriaEntity categoria = this.getCategoriaById(id_categoria);
+
+        return categoriaMapper.toDto(categoria);
+    }
 
     @Override
     public CategoriaDto create(CreateCategoriaDto categoriaDto)
     {
-        //Capitalizando la primera letra del nombre y reemplazandola en el contexto
+        //* Capitalizando la primera letra del nombre y reemplazandola en el contexto
         String capitalizedName = capitalize.CapitalizeText(categoriaDto.getNombre());
         categoriaDto.setNombre(capitalizedName);
 
-        //Verificando si existe una categoría registrada con el nombre
-        CategoriaEntity findCategoria = categoriaRepository.getByNombre(capitalizedName);
-        if (findCategoria != null)
-            throw new BadRequestException("La categoría con el nombre '" + findCategoria.getNombre() + "' ya existe");
+        this.existDuplicateData(capitalizedName);
 
         //Mapeando los datos del dto a la entidad
-        CategoriaEntity categoria = mapper.map(categoriaDto, CategoriaEntity.class);
+        CategoriaEntity categoria = categoriaMapper.toEntity(categoriaDto);
 
-        return mapper.map(categoriaRepository.save(categoria), CategoriaDto.class);
+        return categoriaMapper.toDto(categoriaRepository.save(categoria));
     }
 
     @Override
@@ -52,111 +96,54 @@ public class CategoriaServiceImp implements ICategoriaService
     {
         List<CategoriaEntity> categorias = categoriaRepository.getAllUndeleted();
 
-        return categorias.stream().map(c -> mapper.map(c, CategoriaDto.class)).collect(Collectors.toList());
+        return categoriaMapper.toListDto(categorias);
     }
 
-    @Override
-    public CategoriaDto findById(String id_categoria)
-    {
-        try
-        {
-            CategoriaEntity categoria = categoriaRepository.findById(UUID.fromString(id_categoria)).orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
-
-            return mapper.map(categoria, CategoriaDto.class);
-
-        } catch (Exception e)
-        {
-            if (e instanceof NotFoundException) throw new NotFoundException(e.getMessage());
-
-            throw new BadRequestException(e.getMessage());
-        }
-    }
 
     @Override
-    public CategoriaDto update(UpdateCategoriaDto categoriaDto, String id_categoria)
+    public CategoriaDto update(
+        UpdateCategoriaDto categoriaDto,
+        String id_categoria
+    )
     {
-        try
-        {
-            //Capitalizando la primera letra del nombre de la categoria en el dto
-            String capitalizedName = capitalize.CapitalizeText(categoriaDto.getNombre());
-            categoriaDto.setNombre(capitalizedName);
+        String capitalizedName = capitalize.CapitalizeText(categoriaDto.getNombre());
+        categoriaDto.setNombre(capitalizedName);
 
-            //Obteniendo la categoría mediante su id
-            CategoriaEntity categoria = categoriaRepository.findById(UUID.fromString(id_categoria)).orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
+        CategoriaEntity categoria = this.getCategoriaById(id_categoria);
 
-            //Verificando si la categoría esta eliminada
-            if (categoria.getEliminado())
-                throw new BadRequestException("La categoría " + categoria.getNombre() + " esta eliminada");
+        if (categoria.getEliminado())
+            throw new BadRequestException("La categoría " + categoria.getNombre() + " esta eliminada");
 
-            if (!categoria.getNombre().equals(capitalizedName))
-            {
-                //Verificando si existe otra categoría con el nombre
-                CategoriaEntity categoriaByName = categoriaRepository.getByNombre(capitalizedName);
-                if (categoriaByName != null)
-                    throw new BadRequestException("La categoría con el nombre '" + capitalizedName + "' ya existe");
+        this.existDuplicateDataWhenUpdate(capitalizedName, categoria.getId_categoria());
 
-                //Actualizando datos de la endida categoría a editar
-                mapper.map(categoriaDto, categoria);
+        categoriaMapper.updateFromDto(categoriaDto, categoria);
 
-                //Guardando cambios y retornando
-                return mapper.map(categoriaRepository.save(categoria), CategoriaDto.class);
-            }
-
-            //En caso de que sea el mismo nombre retornara los datos de la categoría encontrada sin actualizar
-            return mapper.map(categoria, CategoriaDto.class);
-
-        } catch (Exception e)
-        {
-            if (e instanceof NotFoundException) throw new NotFoundException(e.getMessage());
-            throw new BadRequestException(e.getMessage());
-        }
+        return categoriaMapper.toDto(categoriaRepository.save(categoria));
     }
 
     @Override
     public CategoriaDto delete(String id_categoria)
     {
-        try
-        {
-            //Obteniendo la categoría mediante su id
-            CategoriaEntity categoria = categoriaRepository.findById(UUID.fromString(id_categoria)).orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
+        CategoriaEntity categoria = this.getCategoriaById(id_categoria);
 
-            //Verificando si la categoría esta eliminada
-            if (categoria.getEliminado())
-                throw new BadRequestException("La categoría " + categoria.getNombre() + " esta eliminada");
+        if (categoria.getEliminado())
+            throw new BadRequestException("La categoría " + categoria.getNombre() + " esta eliminada");
 
-            categoria.setEliminado(true);
+        categoria.setEliminado(true);
 
-            //En caso de que sea el mismo nombre retornara los datos de la categoría encontrada sin actualizar
-            return mapper.map(categoriaRepository.save(categoria), CategoriaDto.class);
-
-        } catch (Exception e)
-        {
-            if (e instanceof NotFoundException) throw new NotFoundException(e.getMessage());
-            throw new BadRequestException(e.getMessage());
-        }
+        return categoriaMapper.toDto(categoriaRepository.save(categoria));
     }
 
     @Override
     public CategoriaDto restore(String id_categoria)
     {
-        try
-        {
-            //Obteniendo la categoría mediante su id
-            CategoriaEntity categoria = categoriaRepository.findById(UUID.fromString(id_categoria)).orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
+        CategoriaEntity categoria = this.getCategoriaById(id_categoria);
 
-            //Verificando si la categoría esta eliminada
-            if (!categoria.getEliminado())
-                throw new BadRequestException("La categoría " + categoria.getNombre() + " no esta eliminada");
+        if (!categoria.getEliminado())
+            throw new BadRequestException("La categoría " + categoria.getNombre() + " no esta eliminada");
 
-            categoria.setEliminado(false);
+        categoria.setEliminado(false);
 
-            //En caso de que sea el mismo nombre retornara los datos de la categoría encontrada sin actualizar
-            return mapper.map(categoriaRepository.save(categoria), CategoriaDto.class);
-
-        } catch (Exception e)
-        {
-            if (e instanceof NotFoundException) throw new NotFoundException(e.getMessage());
-            throw new BadRequestException(e.getMessage());
-        }
+        return categoriaMapper.toDto(categoriaRepository.save(categoria));
     }
 }

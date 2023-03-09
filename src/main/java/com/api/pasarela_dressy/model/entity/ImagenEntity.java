@@ -30,9 +30,6 @@ public class ImagenEntity implements Serializable
     @CreationTimestamp
     private LocalDateTime creado_el;
 
-    @Column()
-    private Boolean eliminado = false;
-
     @ManyToOne()
     @JoinColumn(name = "id_producto", nullable = false)
     private ProductoEntity producto;

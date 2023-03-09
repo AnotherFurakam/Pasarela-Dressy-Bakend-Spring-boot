@@ -10,4 +10,10 @@ import java.util.UUID;
 public interface RoleRepository extends CrudRepository<RolEntity, UUID> {
     @Query("Select r from RolEntity r where r.eliminado = 0")
     List<RolEntity> findAllUndeleted();
+
+    @Query("Select r from RolEntity r where r.nombre = ?1")
+    RolEntity findByRoleName(String name);
+
+    @Query("Select r from RolEntity r where r.nombre = ?1 and r.id_rol != ?2")
+    RolEntity findByRoleNameAndId(String name, UUID id_rol);
 }

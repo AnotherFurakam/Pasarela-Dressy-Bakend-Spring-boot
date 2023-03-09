@@ -12,6 +12,8 @@ public interface ImagenRepository extends CrudRepository<ImagenEntity, UUID>
     @Query("Select i from ImagenEntity i where i.url = ?1")
     ImagenEntity getImagenByUrl(String url);
 
-    @Query("Select i from ImagenEntity i where i.producto.id_producto = ?1 and i.eliminado = 0")
+    @Query("Select i from ImagenEntity i where i.producto.id_producto = ?1")
     List<ImagenEntity> getByIdProducto(UUID id_producto);
+
+
 }

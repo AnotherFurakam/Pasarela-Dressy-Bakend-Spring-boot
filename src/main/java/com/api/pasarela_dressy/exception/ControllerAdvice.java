@@ -26,7 +26,7 @@ public class ControllerAdvice extends ResponseEntityExceptionHandler
 
     @ExceptionHandler(value = UniqueFieldException.class)
     public ResponseEntity<UniqueErrorDto> uniqueFieldExeptionHandler(UniqueFieldException ex) {
-        UniqueErrorDto error = UniqueErrorDto.builder().message(ex.getMessage()).status(ex.getStatus()).errors(ex.getErrors()).build();
+        UniqueErrorDto error = UniqueErrorDto.builder().status(ex.getStatus()).message(ex.getErrors()).build();
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
