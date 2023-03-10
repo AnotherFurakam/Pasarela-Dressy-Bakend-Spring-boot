@@ -14,4 +14,7 @@ public interface TallaRepository extends CrudRepository<TallaEntity, UUID>
 
     @Query("Select t From TallaEntity t where t.nombre = ?1")
     TallaEntity getByName(String name);
+
+    @Query("Select t From TallaEntity t where t.nombre = ?1 and t.id_talla != ?2")
+    TallaEntity getByNameButDifferentFromId(String name, UUID id_talla);
 }
