@@ -7,6 +7,8 @@ import com.api.pasarela_dressy.services.ProductoTalla.IProductoTallaService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,14 +21,14 @@ public class ProductoTallaController
     IProductoTallaService productoTallaService;
 
     @PostMapping("/agregar")
-    public ProductoTallaDto createProductoTalla(@Valid @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody CreateProductoTallaDto productoTallaDto)
+    public ResponseEntity<ProductoTallaDto> createProductoTalla(@Valid @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody CreateProductoTallaDto productoTallaDto)
     {
-        return productoTallaService.create(productoTallaDto);
+        return new ResponseEntity<>(productoTallaService.create(productoTallaDto), HttpStatus.OK);
     }
 
     @PutMapping("/disminuir")
-    public ProductoTallaDto reduceProductoTalla(@Valid @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody UpdateProductoTallaDto productoTallaDto)
+    public ResponseEntity<ProductoTallaDto> reduceProductoTalla(@Valid @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody UpdateProductoTallaDto productoTallaDto)
     {
-        return productoTallaService.update(productoTallaDto);
+        return new ResponseEntity<>(productoTallaService.update(productoTallaDto), HttpStatus.OK);
     }
 }
