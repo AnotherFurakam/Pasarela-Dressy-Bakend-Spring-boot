@@ -1,5 +1,6 @@
 package com.api.pasarela_dressy.utils.mappers;
 
+import com.api.pasarela_dressy.model.dto.DetalleEntrada.CreateDetalleEntradaDto;
 import com.api.pasarela_dressy.model.dto.DetalleEntrada.DetalleEntradaDto;
 import com.api.pasarela_dressy.model.dto.Producto.ShortProductoDto;
 import com.api.pasarela_dressy.model.dto.Talla.ShortTallaDto;
@@ -21,6 +22,11 @@ public class DetalleEntradaMapper
         dto.setTalla(mapper.map(detalleEntradaEntity.getTalla(), ShortTallaDto.class));
         dto.setProducto(mapper.map(detalleEntradaEntity.getProducto(), ShortProductoDto.class));
         return dto;
+    }
+
+    public DetalleEntradaEntity toEntity(CreateDetalleEntradaDto detalleEntradaDto)
+    {
+        return mapper.map(detalleEntradaDto, DetalleEntradaEntity.class);
     }
 
 }

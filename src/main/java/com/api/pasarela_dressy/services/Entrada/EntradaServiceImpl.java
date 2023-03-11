@@ -13,6 +13,8 @@ import com.api.pasarela_dressy.repository.DetalleEntradaRepository;
 import com.api.pasarela_dressy.repository.EmpleadoRepository;
 import com.api.pasarela_dressy.repository.EntradaRepository;
 import com.api.pasarela_dressy.repository.ProveedorRepository;
+import com.api.pasarela_dressy.services.Empleado.EmpleadoServiceImp;
+import com.api.pasarela_dressy.services.Proveedor.ProveedorServiceImp;
 import com.api.pasarela_dressy.utils.mappers.EntradaMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,44 +41,48 @@ public class EntradaServiceImpl implements IEntradaService
     @Autowired
     EntradaMapper entradaMapper;
 
-    @Override
-    public EntradaDto create(CreateEntradaDto entradaDto)
+    @Autowired
+    ProveedorServiceImp proveedorServiceImp;
+
+    @Autowired
+    EmpleadoServiceImp empleadoServiceImp;
+
+
+    //* Utils method
+    public EntradaEntity findEntradaById(String id_entrada)
     {
         try
         {
-            ProveedorEntity proveedor = proveedorRepository.findById(UUID.fromString(entradaDto.getId_proveedor())).orElseThrow(() -> new NotFoundException("El proveedor no fue encontrado"));
-            if (proveedor.getEliminado())
-                throw new BadRequestException("El proveedor fue eliminado");
-
-            EmpleadoEntity empleado = empleadoRepository.findById(UUID.fromString(entradaDto.getId_empleado())).orElseThrow(() -> new NotFoundException("El empleado no fue encontrado"));
-            if (empleado.getEliminado())
-                throw new BadRequestException("El empleado fue eliminado");
-
-            EntradaEntity entrada = entradaMapper.createtoEntity(entradaDto);
-            entrada.setProveedor(proveedor);
-            entrada.setEmpleado(empleado);
-
-            return entradaMapper.toDto(entradaRepository.save(entrada));
-
-        } catch (Exception e)
+            return entradaRepository.findById(UUID.fromString(id_entrada)).orElseThrow(() -> new NotFoundException("La entrada no fue encontrada"));
+        } catch (RuntimeException e)
         {
-            if (e instanceof NotFoundException)
-                throw new NotFoundException(e.getMessage());
+            if (e instanceof NotFoundException) throw new NotFoundException(e.getMessage());
             throw new BadRequestException(e.getMessage());
         }
+    }
+
+
+    //* Service Methods
+    @Override
+    public EntradaDto create(CreateEntradaDto entradaDto)
+    {
+        ProveedorEntity proveedor = proveedorServiceImp.getProveedorById(entradaDto.getId_proveedor());
+        if (proveedor.getEliminado()) throw new BadRequestException("El proveedor fue eliminado");
+
+        EmpleadoEntity empleado = empleadoServiceImp.getEmpleadoById(entradaDto.getId_empleado());
+        if (empleado.getEliminado()) throw new BadRequestException("El empleado fue eliminado");
+
+        EntradaEntity entrada = entradaMapper.createtoEntity(entradaDto);
+        entrada.setProveedor(proveedor);
+        entrada.setEmpleado(empleado);
+        return entradaMapper.toDto(entradaRepository.save(entrada));
     }
 
     @Override
     public EntradaWithDetailsDto getById(String id_entrada)
     {
-        try
-        {
-            List<DetalleEntradaEntity> detalleEntradaEntityList = detalleEntradaRepository.getByEntradaId(UUID.fromString(id_entrada));
-            EntradaEntity entrada = entradaRepository.findById(UUID.fromString(id_entrada)).orElseThrow(() -> new NotFoundException("La entrada no fue encontrada"));
-            return entradaMapper.toEntradaWithDetailDto(entrada, detalleEntradaEntityList);
-        } catch (Exception e)
-        {
-            throw new RuntimeException(e);
-        }
+        List<DetalleEntradaEntity> detalleEntradaEntityList = detalleEntradaRepository.getByEntradaId(UUID.fromString(id_entrada));
+        EntradaEntity entrada = this.findEntradaById(id_entrada);
+        return entradaMapper.toEntradaWithDetailDto(entrada, detalleEntradaEntityList);
     }
 }
