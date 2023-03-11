@@ -14,4 +14,7 @@ public interface ProveedorRepository extends CrudRepository<ProveedorEntity, UUI
 
     @Query("Select p From ProveedorEntity p Where p.nombre = ?1")
     ProveedorEntity findByName(String nombre);
+
+    @Query("Select p From ProveedorEntity p Where p.nombre = ?1 and p.id_proveedor != ?2")
+    ProveedorEntity findByNameButExcludeById(String nombre, UUID id_proveedor);
 }
