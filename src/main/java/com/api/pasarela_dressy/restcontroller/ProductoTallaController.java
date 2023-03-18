@@ -20,15 +20,16 @@ public class ProductoTallaController
     @Autowired
     IProductoTallaService productoTallaService;
 
-    @PostMapping("/agregar")
+    /*@PostMapping("/agregar")
     public ResponseEntity<ProductoTallaDto> createProductoTalla(@Valid @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody CreateProductoTallaDto productoTallaDto)
     {
         return new ResponseEntity<>(productoTallaService.create(productoTallaDto), HttpStatus.OK);
-    }
+    }*/
 
+    /*
     @PutMapping("/disminuir")
     public ResponseEntity<ProductoTallaDto> reduceProductoTalla(@Valid @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody UpdateProductoTallaDto productoTallaDto)
     {
         return new ResponseEntity<>(productoTallaService.update(productoTallaDto), HttpStatus.OK);
-    }
+    }*/
 }

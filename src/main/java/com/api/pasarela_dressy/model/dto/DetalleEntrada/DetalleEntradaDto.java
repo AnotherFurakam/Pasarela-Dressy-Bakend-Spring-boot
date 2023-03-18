@@ -13,7 +13,6 @@ public class DetalleEntradaDto
 {
     private UUID id_detalle_entrada;
     private int cantidad;
-    private String id_entrada;
     private ShortTallaDto talla;
     private ShortProductoDto producto;
 }

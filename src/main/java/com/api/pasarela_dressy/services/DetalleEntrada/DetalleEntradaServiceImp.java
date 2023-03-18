@@ -4,6 +4,7 @@ import com.api.pasarela_dressy.exception.BadRequestException;
 import com.api.pasarela_dressy.exception.NotFoundException;
 import com.api.pasarela_dressy.model.dto.DetalleEntrada.CreateDetalleEntradaDto;
 import com.api.pasarela_dressy.model.dto.DetalleEntrada.DetalleEntradaDto;
+import com.api.pasarela_dressy.model.dto.DetalleEntrada.UpdateDetalleEntradaDto;
 import com.api.pasarela_dressy.model.entity.DetalleEntradaEntity;
 import com.api.pasarela_dressy.model.entity.EntradaEntity;
 import com.api.pasarela_dressy.model.entity.ProductoEntity;
@@ -30,22 +31,10 @@ public class DetalleEntradaServiceImp implements IDetalleEntradaService
     DetalleEntradaRepository detalleEntradaRepository;
 
     @Autowired
-    EntradaRepository entradaRepository;
-
-    @Autowired
-    TallaRepository tallaRepository;
-
-    @Autowired
     TallaServiceImp tallaServiceImp;
 
     @Autowired
-    ProductoRepository productoRepository;
-
-    @Autowired
     ProductoServiceImp productoServiceImp;
-
-    @Autowired
-    ModelMapper mapper;
 
     @Autowired
     DetalleEntradaMapper detalleEntradaMapper;
@@ -65,6 +54,16 @@ public class DetalleEntradaServiceImp implements IDetalleEntradaService
         }
     }
 
+    //* Service Methods
+
+
+    @Override
+    public DetalleEntradaDto getById(String id_detalle_entrada)
+    {
+        DetalleEntradaEntity detalleEntrada = this.findDetalleEntradaById(id_detalle_entrada);
+        return detalleEntradaMapper.toDto(detalleEntrada);
+    }
+
     @Override
     public DetalleEntradaDto create(CreateDetalleEntradaDto createDetalleEntradaDto)
     {
@@ -80,5 +79,22 @@ public class DetalleEntradaServiceImp implements IDetalleEntradaService
         detalleEntradaEntity.setProducto(producto);
 
         return detalleEntradaMapper.toDto(detalleEntradaRepository.save(detalleEntradaEntity));
+    }
+
+    @Override
+    public DetalleEntradaDto update(
+        UpdateDetalleEntradaDto detalleEntradaDto,
+        String id_detalle_entrada
+    )
+    {
+        DetalleEntradaEntity detalleEntrada = this.findDetalleEntradaById(id_detalle_entrada);
+
+        EntradaEntity entrada = entradaService.findEntradaById(detalleEntradaDto.getId_entrada());
+        if (entrada.getEjecutado())
+            throw new BadRequestException("No se puede editar un detalle si la entrada ya fue ejecutada");
+
+        detalleEntradaMapper.updateFromDto(detalleEntradaDto, detalleEntrada);
+
+        return detalleEntradaMapper.toDto(detalleEntradaRepository.save(detalleEntrada));
     }
 }

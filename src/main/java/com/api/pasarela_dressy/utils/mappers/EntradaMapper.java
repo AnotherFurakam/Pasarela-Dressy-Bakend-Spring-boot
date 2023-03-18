@@ -21,6 +21,9 @@ public class EntradaMapper
     @Autowired
     ModelMapper mapper;
 
+    @Autowired
+    DetalleEntradaMapper detalleEntradaMapper;
+
     public EntradaEntity createtoEntity(CreateEntradaDto createEntradaDto)
     {
         return mapper.map(createEntradaDto, EntradaEntity.class);
@@ -37,11 +40,7 @@ public class EntradaMapper
     public EntradaWithDetailsDto toEntradaWithDetailDto(EntradaEntity entrada, List<DetalleEntradaEntity> detalleEntradaEntityList)
     {
         EntradaWithDetailsDto dto = mapper.map(entrada, EntradaWithDetailsDto.class);
-        dto.setDetalle(detalleEntradaEntityList.stream().map(de -> {
-            DetalleEntradaDto detalleEntradaDto = mapper.map(de, DetalleEntradaDto.class);
-            detalleEntradaDto.setId_entrada(entrada.getId_entrada().toString());
-            return detalleEntradaDto;
-        }).collect(Collectors.toList()));
+        dto.setDetalle(detalleEntradaEntityList.stream().map(de -> detalleEntradaMapper.toDto(de)).collect(Collectors.toList()));
         return dto;
     }
 }

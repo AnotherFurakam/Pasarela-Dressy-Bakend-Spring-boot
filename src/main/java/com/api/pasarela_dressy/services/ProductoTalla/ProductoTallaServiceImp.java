@@ -7,6 +7,7 @@ import com.api.pasarela_dressy.model.dto.ProductoTalla.CreateProductoTallaDto;
 import com.api.pasarela_dressy.model.dto.ProductoTalla.ProductoTallaDto;
 import com.api.pasarela_dressy.model.dto.ProductoTalla.UpdateProductoTallaDto;
 import com.api.pasarela_dressy.model.dto.Talla.ShortTallaDto;
+import com.api.pasarela_dressy.model.entity.DetalleEntradaEntity;
 import com.api.pasarela_dressy.model.entity.ProductoEntity;
 import com.api.pasarela_dressy.model.entity.ProductoTallaEntity;
 import com.api.pasarela_dressy.model.entity.TallaEntity;
@@ -42,18 +43,16 @@ public class ProductoTallaServiceImp implements IProductoTallaService
     TallaServiceImp tallaServiceImp;
 
     @Override
-    public ProductoTallaDto create(CreateProductoTallaDto productoTallaDto)
+    public ProductoTallaDto create(DetalleEntradaEntity detalleEntradaEntity)
     {
-        ProductoEntity producto = productoServiceImp.getProductoById(productoTallaDto.getId_producto());
-
-        if (producto.getEliminado()) throw new BadRequestException("El producto esta eliminado");
-
-        TallaEntity talla = tallaServiceImp.getTallaById(productoTallaDto.getId_talla());
+        ProductoEntity producto = detalleEntradaEntity.getProducto();
+        TallaEntity talla = detalleEntradaEntity.getTalla();
+        int cantidad = detalleEntradaEntity.getCantidad();
 
         if (talla.getEliminado()) throw new BadRequestException("La talla esta eliminada");
 
         //* Aumentando el stock del producto
-        producto.setStock(producto.getStock() + productoTallaDto.getCantidad());
+        producto.setStock(producto.getStock() + cantidad);
         productoRepository.save(producto);
 
         //Buscando si existe un productoTalla reigstrado con el mismo producto y talla
@@ -61,14 +60,15 @@ public class ProductoTallaServiceImp implements IProductoTallaService
         if (findedPT != null && !findedPT.getEliminado())
         {
             //* Actualizando la cantidad del producto talla en caso se encontrase y no esté eliminado
-            findedPT.setCantidad(findedPT.getCantidad() + productoTallaDto.getCantidad());
+            findedPT.setCantidad(findedPT.getCantidad() + cantidad);
 
             return productoTallaMapper.toDto(productoTallaRepository.save(findedPT));
         }
 
-        ProductoTallaEntity productoTallaEntity = productoTallaMapper.toEntity(productoTallaDto);
+        ProductoTallaEntity productoTallaEntity = new ProductoTallaEntity();
         productoTallaEntity.setProducto(producto);
         productoTallaEntity.setTalla(talla);
+        productoTallaEntity.setCantidad(cantidad);
 
         return productoTallaMapper.toDto(productoTallaRepository.save(productoTallaEntity));
     }

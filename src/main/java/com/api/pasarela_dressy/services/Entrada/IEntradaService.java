@@ -9,4 +9,7 @@ public interface IEntradaService
     EntradaDto create(CreateEntradaDto entradaDto);
 
     EntradaWithDetailsDto getById(String id_entrada);
+
+    EntradaWithDetailsDto executeEntrada(String id_entrada);
+
 }

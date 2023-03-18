@@ -7,6 +7,8 @@ import com.api.pasarela_dressy.services.Entrada.IEntradaService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,12 +20,31 @@ public class EntradaController
     IEntradaService entradaService;
 
     @GetMapping("/{id_entrada}")
-    public EntradaWithDetailsDto getEntradaById(@PathVariable String id_entrada){
+    public EntradaWithDetailsDto getEntradaById(
+        @PathVariable
+        String id_entrada
+    )
+    {
         return entradaService.getById(id_entrada);
     }
 
     @PostMapping
-    public EntradaDto createEntrada(@Valid @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody CreateEntradaDto entradaDto){
+    public EntradaDto createEntrada(
+        @Valid
+        @RequestBody
+        @io.swagger.v3.oas.annotations.parameters.RequestBody
+        CreateEntradaDto entradaDto
+    )
+    {
         return entradaService.create(entradaDto);
+    }
+
+    @PostMapping("/ejecutar/{id_entrada}")
+    public ResponseEntity<EntradaWithDetailsDto> executeEntrada(
+        @PathVariable
+        String id_entrada
+    )
+    {
+        return new ResponseEntity<>(entradaService.executeEntrada(id_entrada), HttpStatus.OK);
     }
 }
