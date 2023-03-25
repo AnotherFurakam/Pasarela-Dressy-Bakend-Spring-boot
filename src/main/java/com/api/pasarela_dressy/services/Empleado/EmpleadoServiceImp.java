@@ -7,12 +7,17 @@ import com.api.pasarela_dressy.model.dto.Empleado.ChangePasswordDto;
 import com.api.pasarela_dressy.model.dto.Empleado.CreateEmpleadoDto;
 import com.api.pasarela_dressy.model.dto.Empleado.EmpleadoDto;
 import com.api.pasarela_dressy.model.dto.Empleado.UpdateEmpleadoDto;
+import com.api.pasarela_dressy.model.dto.pagination.PaginationDto;
 import com.api.pasarela_dressy.model.entity.EmpleadoEntity;
 import com.api.pasarela_dressy.repository.EmpleadoRepository;
 import com.api.pasarela_dressy.utils.mappers.EmpleadoMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -108,6 +113,37 @@ public class EmpleadoServiceImp implements EmpleadoService
         List<EmpleadoEntity> empleados = empleadoRepository.getAllUndeleted();
 
         return empleadoMapper.toListDto(empleados);
+    }
+
+    @Override
+    //TODO: Separar la lógica que calcula y detecta las pagina previa y la siguiente
+    public PaginationDto<EmpleadoDto> getAllWithPagination(
+        int pageNumber,
+        int pageSize
+    )
+    {
+        //* Adaptando el page number para que la primera página se a 1
+        if (pageNumber - 1 == -1) throw new BadRequestException("El número mínimo de página es 1");
+
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.by("creado_el").ascending());
+        Page<EmpleadoEntity> pageResult = empleadoRepository.getAllUndeletedWithPageable(pageable);
+
+        System.out.println(pageResult.toString());
+
+        // TODO: Refactorizar este código en otra función
+        Integer prevPage = null;
+        Integer nextPage = null;
+
+        if (pageResult.hasPrevious()) prevPage = pageResult.previousPageable().getPageNumber() + 1;
+        if (pageResult.hasNext()) nextPage = pageResult.nextPageable().getPageNumber() + 1;
+        //----
+
+        //* Comprobando que el total page sea igual o menor al totalPage obtenido en la consulta
+        int totalPage = pageResult.getTotalPages();
+        if (pageNumber > totalPage) throw new BadRequestException("No existe la página solicitada");
+
+        PaginationDto<EmpleadoDto> paginationDto = new PaginationDto<>(empleadoMapper.toListDto(pageResult.getContent()), pageNumber, pageSize, totalPage, prevPage, nextPage);
+        return paginationDto;
     }
 
     @Override

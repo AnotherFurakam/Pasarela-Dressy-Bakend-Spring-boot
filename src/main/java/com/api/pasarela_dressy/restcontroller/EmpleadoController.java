@@ -4,6 +4,7 @@ import com.api.pasarela_dressy.model.dto.Empleado.ChangePasswordDto;
 import com.api.pasarela_dressy.model.dto.Empleado.CreateEmpleadoDto;
 import com.api.pasarela_dressy.model.dto.Empleado.EmpleadoDto;
 import com.api.pasarela_dressy.model.dto.Empleado.UpdateEmpleadoDto;
+import com.api.pasarela_dressy.model.dto.pagination.PaginationDto;
 import com.api.pasarela_dressy.services.Empleado.EmpleadoService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -22,9 +23,17 @@ public class EmpleadoController
     @Autowired
     EmpleadoService empleadoService;
 
-    @GetMapping()
+    @GetMapping("")
     public ResponseEntity<List<EmpleadoDto>> getAllEmpleados(){
         return new ResponseEntity<>(empleadoService.getAll(), HttpStatus.OK);
+    }
+
+    @GetMapping("/paginate")
+    public ResponseEntity<PaginationDto<EmpleadoDto>> getAllEmpleadosWithPagination(
+        @RequestParam(defaultValue = "1") int pageNumber,
+        @RequestParam(defaultValue = "10") int pageSize
+    ){
+        return new ResponseEntity<>(empleadoService.getAllWithPagination(pageNumber,pageSize), HttpStatus.OK);
     }
 
     @GetMapping("{id_empleado}")
