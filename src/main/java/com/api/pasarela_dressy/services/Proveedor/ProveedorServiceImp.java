@@ -6,11 +6,16 @@ import com.api.pasarela_dressy.exception.UniqueFieldException;
 import com.api.pasarela_dressy.model.dto.Proveedor.CreateProveedorDto;
 import com.api.pasarela_dressy.model.dto.Proveedor.ProveedorDto;
 import com.api.pasarela_dressy.model.dto.Proveedor.UpdateProveedorDto;
+import com.api.pasarela_dressy.model.dto.pagination.PaginationDto;
 import com.api.pasarela_dressy.model.entity.ProveedorEntity;
 import com.api.pasarela_dressy.repository.ProveedorRepository;
+import com.api.pasarela_dressy.utils.Pagination;
 import com.api.pasarela_dressy.utils.mappers.ProveedorMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -122,6 +127,22 @@ public class ProveedorServiceImp implements IProveedorService
     {
         List<ProveedorEntity> proveedores = proveedorRepository.findAllUndeleted();
         return proveedorMapper.toListDto(proveedores);
+    }
+
+    @Override
+    public PaginationDto<ProveedorDto> getAllWithPagination(int pageNumber, int pageSize)
+    {
+        if (pageNumber - 1 < 0) throw new BadRequestException("El número mínimo de página es 1");
+
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.by("creado_el").ascending());
+
+        Pagination<ProveedorEntity> pagination = new Pagination<>(
+            proveedorRepository.getAllUndeletedWithPageable(pageable));
+
+        return new PaginationDto<>(
+            proveedorMapper.toListDto(pagination.getPageData()), pageNumber, pageSize, pagination.getTotalPageNumber(pageNumber),
+            pagination.getPrevPageNumber(), pagination.getNextpageNumber()
+        );
     }
 
     @Override

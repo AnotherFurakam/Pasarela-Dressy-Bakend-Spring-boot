@@ -10,6 +10,7 @@ import com.api.pasarela_dressy.model.dto.Empleado.UpdateEmpleadoDto;
 import com.api.pasarela_dressy.model.dto.pagination.PaginationDto;
 import com.api.pasarela_dressy.model.entity.EmpleadoEntity;
 import com.api.pasarela_dressy.repository.EmpleadoRepository;
+import com.api.pasarela_dressy.utils.Pagination;
 import com.api.pasarela_dressy.utils.mappers.EmpleadoMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +48,8 @@ public class EmpleadoServiceImp implements EmpleadoService
         try
         {
             //* Al encontrar un error al convertir el texto en UUID será capturado y lanzado como un BadRequestException
-            EmpleadoEntity empleado = empleado = empleadoRepository.findById(UUID.fromString(id_empleado)).orElseThrow(() -> new NotFoundException("Empleado no encontrado"));
+            EmpleadoEntity empleado = empleado = empleadoRepository.findById(UUID.fromString(id_empleado)).orElseThrow(
+                () -> new NotFoundException("Empleado no encontrado"));
             return empleado;
         } catch (Exception e)
         {
@@ -65,8 +67,7 @@ public class EmpleadoServiceImp implements EmpleadoService
      * @param empleado
      */
     private void existDuplicateData(
-        String dni_empleado,
-        String correo_empleado
+        String dni_empleado, String correo_empleado
     )
     {
         // * Creando lista que contendrá los errores de Unique constraint
@@ -84,10 +85,14 @@ public class EmpleadoServiceImp implements EmpleadoService
         }
     }
 
+    /**
+     * Comprueba si existe el dni o correo existen en otras entidades que no sea la encontrada mediante el id
+     * @param dni String
+     * @param correo String
+     * @param id_empleado UUID
+     */
     private void existDuplicateDataWhenUpdate(
-        String dni,
-        String correo,
-        UUID id_empleado
+        String dni, String correo, UUID id_empleado
     )
     {
         // *Creando lista que contendrá los errores de Unique constraint
@@ -116,33 +121,21 @@ public class EmpleadoServiceImp implements EmpleadoService
     }
 
     @Override
-    //TODO: Separar la lógica que calcula y detecta las pagina previa y la siguiente
     public PaginationDto<EmpleadoDto> getAllWithPagination(
-        int pageNumber,
-        int pageSize
+        int pageNumber, int pageSize
     )
     {
-        //* Adaptando el page number para que la primera página se a 1
-        if (pageNumber - 1 == -1) throw new BadRequestException("El número mínimo de página es 1");
+        if (pageNumber - 1 < 0) throw new BadRequestException("El número mínimo de página es 1");
 
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.by("creado_el").ascending());
-        Page<EmpleadoEntity> pageResult = empleadoRepository.getAllUndeletedWithPageable(pageable);
 
-        System.out.println(pageResult.toString());
+        Pagination<EmpleadoEntity> pagination = new Pagination<>(
+            empleadoRepository.getAllUndeletedWithPageable(pageable));
 
-        // TODO: Refactorizar este código en otra función
-        Integer prevPage = null;
-        Integer nextPage = null;
-
-        if (pageResult.hasPrevious()) prevPage = pageResult.previousPageable().getPageNumber() + 1;
-        if (pageResult.hasNext()) nextPage = pageResult.nextPageable().getPageNumber() + 1;
-        //----
-
-        //* Comprobando que el total page sea igual o menor al totalPage obtenido en la consulta
-        int totalPage = pageResult.getTotalPages();
-        if (pageNumber > totalPage) throw new BadRequestException("No existe la página solicitada");
-
-        PaginationDto<EmpleadoDto> paginationDto = new PaginationDto<>(empleadoMapper.toListDto(pageResult.getContent()), pageNumber, pageSize, totalPage, prevPage, nextPage);
+        PaginationDto<EmpleadoDto> paginationDto = new PaginationDto<>(
+            empleadoMapper.toListDto(pagination.getPageData()), pageNumber, pageSize, pagination.getTotalPageNumber(pageNumber),
+            pagination.getPrevPageNumber(), pagination.getNextpageNumber()
+        );
         return paginationDto;
     }
 
@@ -172,8 +165,7 @@ public class EmpleadoServiceImp implements EmpleadoService
 
     @Override
     public EmpleadoDto update(
-        UpdateEmpleadoDto empleadoDto,
-        String id_empleado
+        UpdateEmpleadoDto empleadoDto, String id_empleado
     )
     {
         EmpleadoEntity empleadoEntity = this.getEmpleadoById(id_empleado);
@@ -181,7 +173,8 @@ public class EmpleadoServiceImp implements EmpleadoService
         if (empleadoEntity.getEliminado()) throw new BadRequestException("El empleado está eliminado");
 
         // *Comprobando si los valores únicos son diferentes al que tiene actualmente y determinar su duplicidad con otras entidades para lanzar el error correspondiente
-        this.existDuplicateDataWhenUpdate(empleadoDto.getDni(), empleadoDto.getCorreo(), empleadoEntity.getId_empleado());
+        this.existDuplicateDataWhenUpdate(
+            empleadoDto.getDni(), empleadoDto.getCorreo(), empleadoEntity.getId_empleado());
 
         empleadoMapper.updateEmpleadoFromDto(empleadoDto, empleadoEntity);
 
@@ -243,8 +236,7 @@ public class EmpleadoServiceImp implements EmpleadoService
 
     @Override
     public EmpleadoDto changePassword(
-        String id_empleado,
-        ChangePasswordDto passwordDto
+        String id_empleado, ChangePasswordDto passwordDto
     )
     {
         EmpleadoEntity empleadoEntity = this.getEmpleadoById(id_empleado);

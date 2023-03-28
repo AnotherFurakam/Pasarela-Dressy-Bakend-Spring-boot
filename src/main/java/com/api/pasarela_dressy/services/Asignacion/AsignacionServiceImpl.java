@@ -6,6 +6,7 @@ import com.api.pasarela_dressy.model.dto.Empleado.ShortEmpleadoDto;
 import com.api.pasarela_dressy.model.dto.Rol.ShortRolDto;
 import com.api.pasarela_dressy.model.dto.asignacion.AsignacionDto;
 import com.api.pasarela_dressy.model.dto.asignacion.CreateAsignacionDto;
+import com.api.pasarela_dressy.model.dto.pagination.PaginationDto;
 import com.api.pasarela_dressy.model.entity.AsignacionEntity;
 import com.api.pasarela_dressy.model.entity.EmpleadoEntity;
 import com.api.pasarela_dressy.model.entity.RolEntity;
@@ -15,9 +16,13 @@ import com.api.pasarela_dressy.repository.RoleRepository;
 import com.api.pasarela_dressy.services.Empleado.EmpleadoService;
 import com.api.pasarela_dressy.services.Empleado.EmpleadoServiceImp;
 import com.api.pasarela_dressy.services.Role.RoleServiceImp;
+import com.api.pasarela_dressy.utils.Pagination;
 import com.api.pasarela_dressy.utils.mappers.AsignacionMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -77,6 +82,23 @@ public class AsignacionServiceImpl implements AsignacionService
         List<AsignacionEntity> asignacionEntityList = asignacionRepository.getAllUndelete();
 
         return asignacionMapper.toListDto(asignacionEntityList);
+    }
+
+    @Override
+    public PaginationDto<AsignacionDto> getAllWithPaginationByRoleId(int pageNumber, int pageSize, String id_role)
+    {
+        RolEntity rol = roleServiceImp.getRolById(id_role);
+        if (pageNumber - 1 < 0) throw new BadRequestException("El número mínimo de página es 1");
+
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.by("creado_el").ascending());
+
+        Pagination<AsignacionEntity> pagination = new Pagination<>(
+            asignacionRepository.getAllUndeletedWithPageable(rol, pageable));
+
+        return new PaginationDto<>(
+            asignacionMapper.toListDto(pagination.getPageData()), pageNumber, pageSize, pagination.getTotalPageNumber(pageNumber),
+            pagination.getPrevPageNumber(), pagination.getNextpageNumber()
+        );
     }
 
     @Override
