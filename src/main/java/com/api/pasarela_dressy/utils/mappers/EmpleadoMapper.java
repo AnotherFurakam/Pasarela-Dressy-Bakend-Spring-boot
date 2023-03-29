@@ -1,6 +1,7 @@
 package com.api.pasarela_dressy.utils.mappers;
 
 import com.api.pasarela_dressy.model.dto.Empleado.EmpleadoDto;
+import com.api.pasarela_dressy.model.dto.Empleado.ShortEmpleadoDto;
 import com.api.pasarela_dressy.model.dto.Empleado.UpdateEmpleadoDto;
 import com.api.pasarela_dressy.model.dto.asignacion.ShortAsignacionDto;
 import com.api.pasarela_dressy.model.entity.AsignacionEntity;
@@ -41,6 +42,10 @@ public class EmpleadoMapper
         return dto;
     }
 
+    public ShortEmpleadoDto toShortDto(EmpleadoEntity empleadoEntity) {
+        return mapper.map(empleadoEntity, ShortEmpleadoDto.class);
+    }
+
     /**
      *
      * @param empleadoDto dto del empleado a convertir puede ser el dto de Create o Update
@@ -61,6 +66,18 @@ public class EmpleadoMapper
     public List<EmpleadoDto> toListDto(List<EmpleadoEntity> empleados)
     {
         return empleados.stream().map(this::toDto).toList();
+    }
+
+    /**
+     * Mapea los datos de una Lista de EmpleadoEntity a una lista de EmpleadoDto hacciendo uso de la funcion toDto
+     * para el mapeado individual de cada entidad
+     *
+     * @param empleados lista de entidades de empleados
+     * @return lista de dto de empleados
+     */
+    public List<ShortEmpleadoDto> toListShortDto(List<EmpleadoEntity> empleados)
+    {
+        return empleados.stream().map(this::toShortDto).toList();
     }
 
     /**

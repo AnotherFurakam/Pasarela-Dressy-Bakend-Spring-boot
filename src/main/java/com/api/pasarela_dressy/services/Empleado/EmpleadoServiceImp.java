@@ -3,13 +3,12 @@ package com.api.pasarela_dressy.services.Empleado;
 import com.api.pasarela_dressy.exception.BadRequestException;
 import com.api.pasarela_dressy.exception.NotFoundException;
 import com.api.pasarela_dressy.exception.UniqueFieldException;
-import com.api.pasarela_dressy.model.dto.Empleado.ChangePasswordDto;
-import com.api.pasarela_dressy.model.dto.Empleado.CreateEmpleadoDto;
-import com.api.pasarela_dressy.model.dto.Empleado.EmpleadoDto;
-import com.api.pasarela_dressy.model.dto.Empleado.UpdateEmpleadoDto;
+import com.api.pasarela_dressy.model.dto.Empleado.*;
 import com.api.pasarela_dressy.model.dto.pagination.PaginationDto;
 import com.api.pasarela_dressy.model.entity.EmpleadoEntity;
+import com.api.pasarela_dressy.model.entity.RolEntity;
 import com.api.pasarela_dressy.repository.EmpleadoRepository;
+import com.api.pasarela_dressy.services.Role.RoleServiceImp;
 import com.api.pasarela_dressy.utils.Pagination;
 import com.api.pasarela_dressy.utils.mappers.EmpleadoMapper;
 import org.modelmapper.ModelMapper;
@@ -34,6 +33,9 @@ public class EmpleadoServiceImp implements EmpleadoService
 
     @Autowired
     EmpleadoMapper empleadoMapper;
+
+    @Autowired
+    RoleServiceImp roleServiceImp;
 
     //* Utils Methods
 
@@ -87,8 +89,9 @@ public class EmpleadoServiceImp implements EmpleadoService
 
     /**
      * Comprueba si existe el dni o correo existen en otras entidades que no sea la encontrada mediante el id
-     * @param dni String
-     * @param correo String
+     *
+     * @param dni         String
+     * @param correo      String
      * @param id_empleado UUID
      */
     private void existDuplicateDataWhenUpdate(
@@ -133,8 +136,27 @@ public class EmpleadoServiceImp implements EmpleadoService
             empleadoRepository.getAllUndeletedWithPageable(pageable));
 
         PaginationDto<EmpleadoDto> paginationDto = new PaginationDto<>(
-            empleadoMapper.toListDto(pagination.getPageData()), pageNumber, pageSize, pagination.getTotalPageNumber(pageNumber),
-            pagination.getPrevPageNumber(), pagination.getNextpageNumber()
+            empleadoMapper.toListDto(pagination.getPageData()), pageNumber, pageSize,
+            pagination.getTotalPageNumber(pageNumber), pagination.getPrevPageNumber(), pagination.getNextpageNumber()
+        );
+        return paginationDto;
+    }
+
+    @Override
+    public PaginationDto<ShortEmpleadoDto> getAllNoAsignatedInSpecificRol(int pageNumber, int pageSize, String id_rol)
+    {
+        RolEntity rol = roleServiceImp.getRolById(id_rol);
+
+        if (pageNumber - 1 < 0) throw new BadRequestException("El número mínimo de página es 1");
+
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.by("creado_el").ascending());
+
+        Pagination<EmpleadoEntity> pagination = new Pagination<>(
+            empleadoRepository.getAllNoAsignatedInSpecificRol(rol, pageable));
+
+        PaginationDto<ShortEmpleadoDto> paginationDto = new PaginationDto<>(
+            empleadoMapper.toListShortDto(pagination.getPageData()), pageNumber, pageSize,
+            pagination.getTotalPageNumber(pageNumber), pagination.getPrevPageNumber(), pagination.getNextpageNumber()
         );
         return paginationDto;
     }

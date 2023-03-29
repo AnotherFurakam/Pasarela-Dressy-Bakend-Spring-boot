@@ -1,9 +1,6 @@
 package com.api.pasarela_dressy.services.Empleado;
 
-import com.api.pasarela_dressy.model.dto.Empleado.ChangePasswordDto;
-import com.api.pasarela_dressy.model.dto.Empleado.CreateEmpleadoDto;
-import com.api.pasarela_dressy.model.dto.Empleado.EmpleadoDto;
-import com.api.pasarela_dressy.model.dto.Empleado.UpdateEmpleadoDto;
+import com.api.pasarela_dressy.model.dto.Empleado.*;
 import com.api.pasarela_dressy.model.dto.pagination.PaginationDto;
 import com.api.pasarela_dressy.model.entity.EmpleadoEntity;
 
@@ -13,6 +10,7 @@ public interface EmpleadoService
 {
     List<EmpleadoDto> getAll();
     PaginationDto<EmpleadoDto> getAllWithPagination(int pageNumber, int pageSize);
+    PaginationDto<ShortEmpleadoDto> getAllNoAsignatedInSpecificRol(int pageNumber, int pageSize, String id_rol);
     EmpleadoDto getById(String id_empleado);
     EmpleadoDto create(CreateEmpleadoDto empleado);
     EmpleadoDto update(UpdateEmpleadoDto empleado, String id_empleado);
