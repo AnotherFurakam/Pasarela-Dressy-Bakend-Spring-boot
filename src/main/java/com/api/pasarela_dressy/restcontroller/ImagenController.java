@@ -20,8 +20,8 @@ public class ImagenController
     @Autowired
     IImagenService imagenService;
 
-    @PostMapping()
-    public ResponseEntity<ImagenDto> createImagen(@Valid @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody CreateImagenDto imagenDto)
+    @PostMapping(consumes = {"multipart/form-data"})
+    public ResponseEntity<List<ImagenDto>> createImagen(@Valid CreateImagenDto imagenDto)
     {
         return new ResponseEntity<>(imagenService.createImagen(imagenDto), HttpStatus.CREATED);
     }

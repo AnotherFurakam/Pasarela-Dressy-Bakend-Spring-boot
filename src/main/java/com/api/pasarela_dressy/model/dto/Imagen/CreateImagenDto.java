@@ -8,21 +8,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.URL;
 import org.hibernate.validator.constraints.UUID;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
 public class CreateImagenDto
 {
-    @NotBlank(message = "La url no debe estar vacía ni ser nula")
-    @Size(min = 20, max = 400, message = "La url no debe tener menos de {min} y mas de {max} caracteres")
-    @URL(message = "Debe ingresar una url válida")
-    @Pattern(
-        regexp = "https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()!@:%_\\+" + ".~#?&\\/\\/=]*)",
-        message = "Debe ingresar una URL válida"
-    )
-    @Schema(name = "url", example = "https://res.cloudinary.com/furakam/image/upload/v1677973713/pasarela-dressy/polo-adidas_y2hjga.webp")
-    private String url;
-
+    private List<MultipartFile> images;
 
     @NotBlank(message = "El id de producto no debe estar vacía ni ser nulo")
     @UUID(message = "Debe ingresar un id válido")

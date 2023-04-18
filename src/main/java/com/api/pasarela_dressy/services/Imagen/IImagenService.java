@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface IImagenService
 {
-    ImagenDto createImagen(CreateImagenDto imagenDto);
+    List<ImagenDto> createImagen(CreateImagenDto imagenDto);
 
     List<ImagenDto> getImagenByIdProducto(String id_producto);
 

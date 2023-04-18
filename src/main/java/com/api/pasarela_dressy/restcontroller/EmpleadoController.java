@@ -3,11 +3,13 @@ package com.api.pasarela_dressy.restcontroller;
 import com.api.pasarela_dressy.model.dto.Empleado.*;
 import com.api.pasarela_dressy.model.dto.pagination.PaginationDto;
 import com.api.pasarela_dressy.services.Empleado.EmpleadoService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,12 +17,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/empleado")
 @Tag(name = "Empleado")
+@SecurityRequirement(name = "pasareladressyapi")
+@PreAuthorize("hasRole('ROLE_ADMINISTRADOR')")
 public class EmpleadoController
 {
     @Autowired
     EmpleadoService empleadoService;
 
-    @GetMapping("")
+    @GetMapping
     public ResponseEntity<List<EmpleadoDto>> getAllEmpleados()
     {
         return new ResponseEntity<>(empleadoService.getAll(), HttpStatus.OK);
@@ -47,7 +51,8 @@ public class EmpleadoController
         String id_rol
     )
     {
-        return new ResponseEntity<>(empleadoService.getAllNoAsignatedInSpecificRol(pageNumber, pageSize, id_rol), HttpStatus.OK);
+        return new ResponseEntity<>(
+            empleadoService.getAllNoAsignatedInSpecificRol(pageNumber, pageSize, id_rol), HttpStatus.OK);
     }
 
 

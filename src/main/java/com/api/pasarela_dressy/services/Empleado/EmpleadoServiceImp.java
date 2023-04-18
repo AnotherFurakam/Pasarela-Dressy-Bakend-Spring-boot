@@ -3,12 +3,16 @@ package com.api.pasarela_dressy.services.Empleado;
 import com.api.pasarela_dressy.exception.BadRequestException;
 import com.api.pasarela_dressy.exception.NotFoundException;
 import com.api.pasarela_dressy.exception.UniqueFieldException;
+import com.api.pasarela_dressy.external.sendmail.dto.SendMailBodyDto;
+import com.api.pasarela_dressy.external.sendmail.dto.SendMailResponseDto;
+import com.api.pasarela_dressy.external.sendmail.service.ISendMailService;
 import com.api.pasarela_dressy.model.dto.Empleado.*;
 import com.api.pasarela_dressy.model.dto.pagination.PaginationDto;
 import com.api.pasarela_dressy.model.entity.EmpleadoEntity;
 import com.api.pasarela_dressy.model.entity.RolEntity;
 import com.api.pasarela_dressy.repository.EmpleadoRepository;
 import com.api.pasarela_dressy.services.Role.RoleServiceImp;
+import com.api.pasarela_dressy.utils.EncryptPassword;
 import com.api.pasarela_dressy.utils.Pagination;
 import com.api.pasarela_dressy.utils.mappers.EmpleadoMapper;
 import org.modelmapper.ModelMapper;
@@ -18,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -25,7 +30,8 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class EmpleadoServiceImp implements EmpleadoService
+public class EmpleadoServiceImp
+    implements EmpleadoService
 {
 
     @Autowired
@@ -36,6 +42,12 @@ public class EmpleadoServiceImp implements EmpleadoService
 
     @Autowired
     RoleServiceImp roleServiceImp;
+
+    @Autowired
+    ISendMailService sendMailService;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     //* Utils Methods
 
@@ -179,10 +191,16 @@ public class EmpleadoServiceImp implements EmpleadoService
         EmpleadoEntity empleadoEntity = empleadoMapper.toEntity(empleadoDto);
 
         //*Asignando el número de dni como contaseña de forma predeterminada
-        empleadoEntity.setContrasenia(empleadoDto.getDni());
+        String hash = passwordEncoder.encode(empleadoDto.getDni());
+        empleadoEntity.setContrasenia(hash);
 
-        return empleadoMapper.toDto(empleadoRepository.save(empleadoEntity));
+        EmpleadoDto dto = empleadoMapper.toDto(empleadoRepository.save(empleadoEntity));
+        sendMailService.sendMailEmpleado(
+            new SendMailBodyDto(dto.getNombres(), dto.getApellido_pat() + " " + dto.getApellido_mat(),
+                                dto.getCorreo()
+            ));
 
+        return dto;
     }
 
     @Override

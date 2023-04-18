@@ -3,6 +3,7 @@ package com.api.pasarela_dressy.services.Imagen;
 import com.api.pasarela_dressy.exception.BadRequestException;
 import com.api.pasarela_dressy.exception.NotFoundException;
 import com.api.pasarela_dressy.exception.UniqueFieldException;
+import com.api.pasarela_dressy.external.imageservice.service.IImageUploaderService;
 import com.api.pasarela_dressy.model.dto.Imagen.CreateImagenDto;
 import com.api.pasarela_dressy.model.dto.Imagen.ImagenDto;
 import com.api.pasarela_dressy.model.entity.ImagenEntity;
@@ -15,6 +16,7 @@ import org.aspectj.weaver.ast.Not;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -23,7 +25,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-public class ImagenServiceImp implements IImagenService
+public class ImagenServiceImp
+    implements IImagenService
 {
     @Autowired
     ImagenRepository imagenRepository;
@@ -40,11 +43,15 @@ public class ImagenServiceImp implements IImagenService
     @Autowired
     ImagenMapper imagenMapper;
 
+    @Autowired
+    IImageUploaderService imageUploaderService;
+
     private ImagenEntity getImagenById(String id_imagen)
     {
         try
         {
-            return imagenRepository.findById(UUID.fromString(id_imagen)).orElseThrow(() -> new NotFoundException("Imagen no encontrada"));
+            return imagenRepository.findById(UUID.fromString(id_imagen)).orElseThrow(
+                () -> new NotFoundException("Imagen no encontrada"));
         } catch (RuntimeException e)
         {
             if (e instanceof NotFoundException) throw new NotFoundException(e.getMessage());
@@ -64,23 +71,29 @@ public class ImagenServiceImp implements IImagenService
     }
 
     @Override
-    public ImagenDto createImagen(CreateImagenDto imagenDto)
+    public List<ImagenDto> createImagen(CreateImagenDto imagenDto)
     {
-        this.existDuplicateUrl(imagenDto.getUrl());
-
         //* Buscando el producto al que se le asignara una imagen mediante su id
         ProductoEntity producto = productoServiceImp.getProductoById(imagenDto.getId_producto());
 
-        if (!producto.getActivo())
-            throw new BadRequestException("El producto no esta activo, no se le podrá asignar una imagen hasta activarlo");
+        if (!producto.getActivo()) throw new BadRequestException(
+            "El producto no esta activo, no se le podrá asignar una imagen hasta activarlo");
 
-        if (producto.getEliminado())
-            throw new BadRequestException("El producto esta eliminado, no se le podrá asigar una imagen hasta restaurarlo");
+        if (producto.getEliminado()) throw new BadRequestException(
+            "El producto esta eliminado, no se le podrá asigar una imagen hasta restaurarlo");
 
-        ImagenEntity imagen = imagenMapper.toEntity(imagenDto);
-        imagen.setProducto(producto);
+        //* Guardando las imágenes en la nube y obteniendo sus urls
+        List<String> urls = imageUploaderService.imageUploader(imagenDto.getImages());
 
-        return imagenMapper.toDto(imagenRepository.save(imagen));
+        for (String url : urls)
+        {
+            ImagenEntity imagen = new ImagenEntity();
+            imagen.setProducto(producto);
+            imagen.setUrl(url);
+            ImagenEntity img = imagenRepository.save(imagen);
+        }
+
+        return imagenMapper.imagenDtoList(imagenRepository.getByIdProducto(producto.getId_producto()));
     }
 
     @Override

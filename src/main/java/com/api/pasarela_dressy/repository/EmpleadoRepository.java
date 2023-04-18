@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface EmpleadoRepository extends CrudRepository<EmpleadoEntity, UUID>
@@ -27,6 +28,9 @@ public interface EmpleadoRepository extends CrudRepository<EmpleadoEntity, UUID>
 
     @Query("Select e from EmpleadoEntity e where e.correo = ?1")
     EmpleadoEntity getByCorreo(String email);
+
+    @Query("Select e from EmpleadoEntity e where e.correo = ?1")
+    Optional<EmpleadoEntity> getOneByCorreo(String correo);
 
     @Query("Select e from EmpleadoEntity e where e.dni = ?1 and e.id_empleado != ?2")
     EmpleadoEntity getByDniAndId(String dni, UUID id_empleado);

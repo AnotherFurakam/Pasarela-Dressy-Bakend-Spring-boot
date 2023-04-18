@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public interface AsignacionRepository extends CrudRepository<AsignacionEntity, UUID>
@@ -25,4 +26,7 @@ public interface AsignacionRepository extends CrudRepository<AsignacionEntity, U
 
     @Query(value = "Select a From AsignacionEntity a Where a.empleado = ?1")
     List<AsignacionEntity> getByEmpleado(EmpleadoEntity empleado);
+
+    @Query(value = "Select a From AsignacionEntity a Where a.empleado = ?1")
+    Set<AsignacionEntity> getByEmpleadoSet(EmpleadoEntity empleado);
 }
