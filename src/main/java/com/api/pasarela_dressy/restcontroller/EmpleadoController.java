@@ -18,7 +18,7 @@ import java.util.List;
 @RequestMapping("/empleado")
 @Tag(name = "Empleado")
 @SecurityRequirement(name = "pasareladressyapi")
-@PreAuthorize("hasRole('ROLE_ADMINISTRADOR')")
+//@PreAuthorize("hasRole('ROLE_ADMINISTRADOR')")
 public class EmpleadoController
 {
     @Autowired
